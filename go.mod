@@ -1,3 +1,3 @@
-module github.com/cortex/auth-gateway
+module github.com/cortexproject/auth-gateway
 
-go 1.19
+go 1.20
