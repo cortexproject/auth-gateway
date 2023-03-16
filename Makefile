@@ -18,7 +18,7 @@ clean:
 	rm -f $(BINARY_NAME)
 
 run: build
-	./$(BINARY_NAME)
+	./$(BINARY_NAME) $(FILE_PATH)
 
 deps:
 	$(GOGET) -v ./...
