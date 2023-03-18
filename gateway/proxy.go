@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -15,6 +16,9 @@ func NewProxy(targetURL string) (*Proxy, error) {
 	url, err := url.Parse(targetURL)
 	if err != nil {
 		return nil, err
+	}
+	if url.Scheme == "" {
+		return nil, fmt.Errorf("invalid URL scheme: %s", targetURL)
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(url)
