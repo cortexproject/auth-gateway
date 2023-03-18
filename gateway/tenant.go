@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -17,15 +16,13 @@ type config struct {
 	Basic map[string]Tenant `yaml:"basic"`
 }
 
-var tenants = make([]Tenant, 0)
-var isTenantsInitialized = false
-
-func InitTenants(filePath string) {
+func GetTenants(filePath string) ([]Tenant, error) {
 	data, err := readYaml(filePath)
 	if err != nil {
-		panic(err)
+		return []Tenant{}, err
 	}
 
+	tenants := make([]Tenant, 0)
 	tenantData := data.Basic
 	for key, val := range tenantData {
 		tenants = append(tenants, Tenant{
@@ -34,16 +31,8 @@ func InitTenants(filePath string) {
 			Password: val.Password,
 		})
 	}
-	isTenantsInitialized = true
-}
 
-func GetTenants() []Tenant {
-	if !isTenantsInitialized {
-		log.Println("No tenant is provided, returning an empty slice")
-		return tenants
-	}
-
-	return tenants
+	return tenants, nil
 }
 
 func readYaml(filePath string) (*config, error) {

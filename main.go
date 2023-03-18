@@ -1,29 +1,34 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/cortexproject/auth-gateway/gateway"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 func main() {
+	logger := log.NewLogfmtLogger(os.Stdout)
 	targetURL := "http://localhost:8888"
 	proxy, err := gateway.NewProxy(targetURL)
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log("msg", err)
 		return
 	}
 
 	if len(os.Args) < 2 {
-		log.Println("Please provide a file path as an argument")
+		level.Error(logger).Log("msg", err)
 		os.Exit(1)
 	}
 
 	filePath := os.Args[1]
-	gateway.InitTenants(filePath)
+	tenants, err := gateway.GetTenants(filePath)
+	if err != nil {
+		level.Error(logger).Log("msg", err)
+	}
 
 	http.Handle("/", gateway.Authenticate(proxy))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	level.Error(logger).Log("msg", http.ListenAndServe(":8080", nil))
 }

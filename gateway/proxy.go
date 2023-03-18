@@ -27,6 +27,7 @@ func NewProxy(targetURL string) (*Proxy, error) {
 	}, nil
 }
 
+// it may seem reduntant right now but I plan to use this later
 func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) func(*http.Request) {
 	return func(r *http.Request) {
 		originalDirector(r)
