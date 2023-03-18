@@ -11,7 +11,7 @@ build:
 	$(GOBUILD) -o $(BINARY_NAME) -v
 
 test:
-	$(GOTEST) -v ./...
+	$(GOTEST) -race -vet=off ./...
 
 clean:
 	$(GOCLEAN)
