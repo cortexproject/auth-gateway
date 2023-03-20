@@ -1,53 +1,46 @@
 package gateway
 
 import (
-	"log"
 	"net/http"
+	"os"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
-func Authenticate(h http.Handler) http.Handler {
+func (tenants *Tenant) Authenticate(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ok := authenticateAllTenants(w, r)
+		logger := log.NewLogfmtLogger(os.Stdout)
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		username, password, ok := r.BasicAuth()
 		if !ok {
-			log.Println("Not all tenants have a valid credentials")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		noValidTenant := true
+		for _, value := range tenants.All {
+			if value.Username == username {
+				if value.Password == password {
+					r.Header.Set("X-Scope-OrgID", value.ID)
+					noValidTenant = false
+				} else {
+					level.Error(logger).Log("msg", "Wrong password for ", value.Username)
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					return
+				}
+			}
+		}
+
+		if noValidTenant {
+			level.Error(logger).Log("msg", "No valid credentials are present in the configuration file!")
 			return
 		}
 		h.ServeHTTP(w, r)
 	})
-}
-
-func authenticateSingleTenant(w http.ResponseWriter, r *http.Request, t *Tenant) bool {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return false
-	}
-
-	username, password, ok := r.BasicAuth()
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return false
-	}
-
-	if username != t.Username || password != t.Password {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return false
-	}
-	r.Header.Set("X-Scope-OrgID", t.ID)
-
-	return true
-}
-
-func authenticateAllTenants(w http.ResponseWriter, r *http.Request) bool {
-	tenants := GetTenants()
-	for _, tenant := range tenants {
-		ok := authenticateSingleTenant(w, r, &tenant)
-		if !ok {
-			log.Printf("Could not authenticate this tenant: %v\n", tenant)
-			return false
-		}
-	}
-
-	return true
 }
