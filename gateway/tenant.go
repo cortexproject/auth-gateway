@@ -7,32 +7,38 @@ import (
 )
 
 type Tenant struct {
+	All map[string]tenant `yaml:"All"`
+}
+
+type tenant struct {
 	ID       string `yaml:"ID"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
 
 type config struct {
-	Basic map[string]Tenant `yaml:"basic"`
+	Basic map[string]tenant `yaml:"basic"`
 }
 
-func GetTenants(filePath string) ([]Tenant, error) {
+func GetTenants(filePath string) (Tenant, error) {
+	tenants := make(map[string]tenant)
 	data, err := readYaml(filePath)
 	if err != nil {
-		return []Tenant{}, err
+		return Tenant{}, err
 	}
 
-	tenants := make([]Tenant, 0)
 	tenantData := data.Basic
 	for key, val := range tenantData {
-		tenants = append(tenants, Tenant{
+		tenants[key] = tenant{
 			ID:       val.ID,
 			Username: key,
 			Password: val.Password,
-		})
+		}
 	}
 
-	return tenants, nil
+	return Tenant{
+		All: tenants,
+	}, nil
 }
 
 func readYaml(filePath string) (*config, error) {
