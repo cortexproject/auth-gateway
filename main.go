@@ -19,7 +19,7 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		level.Error(logger).Log("msg", err)
+		level.Error(logger).Log("msg", "No configuration file is provided")
 		os.Exit(1)
 	}
 
@@ -29,6 +29,6 @@ func main() {
 		level.Error(logger).Log("msg", err)
 	}
 
-	http.Handle("/", gateway.Authenticate(proxy))
+	http.Handle("/", tenants.Authenticate(proxy))
 	level.Error(logger).Log("msg", http.ListenAndServe(":8080", nil))
 }
