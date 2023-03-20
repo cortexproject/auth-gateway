@@ -24,13 +24,13 @@ func (tenants *Tenant) Authenticate(h http.Handler) http.Handler {
 		}
 
 		noValidTenant := true
-		for _, value := range tenants.All {
+		for key, value := range tenants.All {
 			if value.Username == username {
 				if value.Password == password {
 					r.Header.Set("X-Scope-OrgID", value.ID)
 					noValidTenant = false
 				} else {
-					level.Error(logger).Log("msg", "Wrong password for ", value.Username)
+					level.Error(logger).Log("msg", "Wrong password for ", key)
 					http.Error(w, "Unauthorized", http.StatusUnauthorized)
 					return
 				}
@@ -38,9 +38,11 @@ func (tenants *Tenant) Authenticate(h http.Handler) http.Handler {
 		}
 
 		if noValidTenant {
-			level.Error(logger).Log("msg", "No valid credentials are present in the configuration file!")
+			level.Error(logger).Log("msg", "No valid tenant credentials are found")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
 		h.ServeHTTP(w, r)
 	})
 }
