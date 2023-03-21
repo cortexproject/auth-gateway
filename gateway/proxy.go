@@ -8,11 +8,13 @@ import (
 )
 
 type Proxy struct {
-	targetURL    *url.URL
+	targetName string
+	targetURL  *url.URL
+
 	reverseProxy *httputil.ReverseProxy
 }
 
-func NewProxy(targetURL string) (*Proxy, error) {
+func NewProxy(targetURL string, targetName string) (*Proxy, error) {
 	url, err := url.Parse(targetURL)
 	if err != nil {
 		return nil, err
@@ -26,6 +28,7 @@ func NewProxy(targetURL string) (*Proxy, error) {
 	reverseProxy.Director = customDirector(url, originalDirector)
 
 	return &Proxy{
+		targetName:   targetName,
 		targetURL:    url,
 		reverseProxy: reverseProxy,
 	}, nil

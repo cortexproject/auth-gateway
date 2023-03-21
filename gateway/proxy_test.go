@@ -29,7 +29,7 @@ func TestNewProxy(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := NewProxy(tc.targetURL)
+			p, err := NewProxy(tc.targetURL, tc.name)
 			if (err != nil) != tc.expectErr {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -70,7 +70,7 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			proxy, err := NewProxy("http://example.com")
+			proxy, err := NewProxy("http://example.com", tc.name)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
