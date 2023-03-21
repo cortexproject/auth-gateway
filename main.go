@@ -24,7 +24,7 @@ func main() {
 	}
 
 	filePath := os.Args[1]
-	tenants, err := gateway.GetTenants(filePath)
+	tenants, err := gateway.InitTenants(filePath, logger)
 	if err != nil {
 		level.Error(logger).Log("msg", err)
 	}

@@ -3,11 +3,13 @@ package gateway
 import (
 	"os"
 
+	"github.com/go-kit/log"
 	"gopkg.in/yaml.v2"
 )
 
 type Tenant struct {
-	All map[string]tenant `yaml:"All"`
+	All    map[string]tenant `yaml:"All"`
+	Logger log.Logger
 }
 
 type tenant struct {
@@ -20,7 +22,7 @@ type config struct {
 	Basic map[string]tenant `yaml:"basic"`
 }
 
-func GetTenants(filePath string) (Tenant, error) {
+func InitTenants(filePath string, logger log.Logger) (Tenant, error) {
 	tenants := make(map[string]tenant)
 	data, err := readYaml(filePath)
 	if err != nil {
@@ -37,7 +39,8 @@ func GetTenants(filePath string) (Tenant, error) {
 	}
 
 	return Tenant{
-		All: tenants,
+		All:    tenants,
+		Logger: logger,
 	}, nil
 }
 
@@ -48,7 +51,7 @@ func readYaml(filePath string) (*config, error) {
 	}
 
 	var config config
-	err = yaml.Unmarshal(data, &config)
+	err = yaml.UnmarshalStrict(data, &config)
 	if err != nil {
 		return nil, err
 	}

@@ -49,7 +49,7 @@ func TestGetTenants(t *testing.T) {
 			name:     "Empty input file",
 			filePath: "testdata/empty.yaml",
 			expectedTenants: Tenant{
-				map[string]tenant{},
+				All: map[string]tenant{},
 			},
 			expectedErr: nil,
 		},
@@ -57,7 +57,7 @@ func TestGetTenants(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tenants, err := GetTenants(tc.filePath)
+			tenants, err := InitTenants(tc.filePath, nil)
 			if !reflect.DeepEqual(tenants, tc.expectedTenants) {
 				t.Errorf("Unexpected result: got %v, want %v", tenants, tc.expectedTenants)
 			}
