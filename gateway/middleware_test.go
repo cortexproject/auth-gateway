@@ -4,10 +4,14 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	"github.com/go-kit/log"
 )
 
 func TestAuthenticate(t *testing.T) {
+	logger := log.NewLogfmtLogger(os.Stdout)
 	testCases := []struct {
 		name           string
 		tenants        *Tenant
@@ -50,6 +54,7 @@ func TestAuthenticate(t *testing.T) {
 						Password: "password1",
 					},
 				},
+				Logger: logger,
 			},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username1:wrong_password")),
 			expectedStatus: http.StatusUnauthorized,
@@ -64,6 +69,7 @@ func TestAuthenticate(t *testing.T) {
 						Password: "password1",
 					},
 				},
+				Logger: logger,
 			},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username2:password2")),
 			expectedStatus: http.StatusUnauthorized,
