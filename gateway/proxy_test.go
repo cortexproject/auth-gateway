@@ -47,7 +47,7 @@ func TestNewProxy(t *testing.T) {
 	}
 }
 
-func TestServeHTTP(t *testing.T) {
+func TestHandler(t *testing.T) {
 	testCases := []struct {
 		name           string
 		hasAuthHeader  bool
@@ -84,7 +84,7 @@ func TestServeHTTP(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 
-			proxy.ServeHTTP(rr, req)
+			proxy.Handler(rr, req)
 
 			if _, ok := req.Header[tc.expectedHeader]; ok {
 				t.Errorf("Unexpected Authorization header found: %s", req.Header.Get("Authorization"))

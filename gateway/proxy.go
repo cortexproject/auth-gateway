@@ -41,7 +41,7 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 	}
 }
 
-func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *Proxy) Handler(w http.ResponseWriter, r *http.Request) {
 	r.Header.Del("Authorization")
 	p.reverseProxy.ServeHTTP(w, r)
 }
