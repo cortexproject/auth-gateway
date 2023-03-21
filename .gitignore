@@ -1,0 +1,11 @@
+auth-gateway
+
+.uptodate
+.pkg
+.cache
+docker-images/
+
+.idea
+.vscode
+compose
+compose-simple
