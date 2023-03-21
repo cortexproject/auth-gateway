@@ -3,7 +3,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
-BINARY_NAME=main
+BINARY_NAME=auth-gateway
 
 all: verify build vet staticcheck test run_staticcheck
 
