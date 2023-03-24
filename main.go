@@ -1,11 +1,16 @@
 package main
 
 import (
+	"net"
+	"net/url"
 	"os"
+	"strconv"
 
-	"github.com/cortexproject/auth-gateway/gateway"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+
+	"github.com/cortexproject/auth-gateway/gateway"
+	"github.com/cortexproject/auth-gateway/server"
 )
 
 func main() {
@@ -17,22 +22,30 @@ func main() {
 
 	filePath := os.Args[1]
 	conf, err := gateway.Init(filePath, logger)
-	if err != nil {
-		level.Error(logger).Log("msg", err)
+	gateway.CheckErr("reading the configuration file", err, logger)
+
+	serverAddr, err := url.Parse("http://127.0.0.1:8080")
+	gateway.CheckErr("parsing the url", err, logger)
+
+	host, port, err := net.SplitHostPort(serverAddr.Host)
+	gateway.CheckErr("splitting the host and the port", err, logger)
+
+	parsedPort, err := strconv.Atoi(port)
+	gateway.CheckErr("converting the port number to an int", err, logger)
+
+	serverConf := server.Config{
+		HTTPListenAddr: host,
+		HTTPListenPort: parsedPort,
 	}
+	server, err := server.New(serverConf)
+	gateway.CheckErr("initializing the server", err, logger)
 
-	// TODO: below will be implemented in the next PR
-	// serverConf := server.Config{}
-	// server, err := server.New(serverConf)
+	defer server.Shutdown()
 
-	gateway, err := gateway.New(conf)
-	if err != nil {
-		level.Error(logger).Log("msg", "Could not initiate the gateway")
-		os.Exit(1)
-	}
+	gtw, err := gateway.New(conf, server)
+	gateway.CheckErr("initializing the gateway", err, logger)
 
-	gateway.Start(&conf)
+	gtw.Start(&conf)
 
-	// TODO: below will be implemented in the next PR
-	// server.Run()
+	server.Run()
 }
