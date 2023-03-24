@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/cortexproject/auth-gateway/gateway"
@@ -11,24 +10,29 @@ import (
 
 func main() {
 	logger := log.NewLogfmtLogger(os.Stdout)
-	targetURL := "http://localhost:8888"
-	proxy, err := gateway.NewProxy(targetURL)
-	if err != nil {
-		level.Error(logger).Log("msg", err)
-		return
-	}
-
 	if len(os.Args) < 2 {
 		level.Error(logger).Log("msg", "No configuration file is provided")
 		os.Exit(1)
 	}
 
 	filePath := os.Args[1]
-	tenants, err := gateway.InitTenants(filePath, logger)
+	conf, err := gateway.Init(filePath, logger)
 	if err != nil {
 		level.Error(logger).Log("msg", err)
 	}
 
-	http.Handle("/", tenants.Authenticate(proxy))
-	level.Error(logger).Log("msg", http.ListenAndServe(":8080", nil))
+	// TODO: below will be implemented in the next PR
+	// serverConf := server.Config{}
+	// server, err := server.New(serverConf)
+
+	gateway, err := gateway.New(conf, nil)
+	if err != nil {
+		level.Error(logger).Log("msg", "Could not initiate the gateway")
+		os.Exit(1)
+	}
+
+	gateway.Start(&conf)
+
+	// TODO: below will be implemented in the next PR
+	// server.Run()
 }
