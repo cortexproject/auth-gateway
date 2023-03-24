@@ -1,7 +1,5 @@
-basic:
-  username1:
-    ID: "orgid1"
-    password: "password1"
-  username2:
-    ID: "orgid2"
-    password: "password2"
+server-address: "localhost:8080"
+auth-type: "basic"
+routes:
+  - path: "/api/v1"
+    target: "http://localhost:8081"
