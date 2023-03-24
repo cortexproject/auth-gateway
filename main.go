@@ -25,7 +25,7 @@ func main() {
 	// serverConf := server.Config{}
 	// server, err := server.New(serverConf)
 
-	gateway, err := gateway.New(conf, nil)
+	gateway, err := gateway.New(conf)
 	if err != nil {
 		level.Error(logger).Log("msg", "Could not initiate the gateway")
 		os.Exit(1)

@@ -1,15 +1,12 @@
 package gateway
 
-import (
-	"github.com/cortexproject/auth-gateway/server"
-)
-
 type Gateway struct {
 	distributorProxy *Proxy
-	server           *server.Server
+	// server           *server.Server
 }
 
-func New(config Configuration, srv *server.Server) (*Gateway, error) {
+// This `srv *server.Server` will be taken as a parameter
+func New(config Configuration) (*Gateway, error) {
 	distributor, err := NewProxy(config.Targets["distributor"], "distributor")
 	if err != nil {
 		return nil, err
@@ -17,7 +14,7 @@ func New(config Configuration, srv *server.Server) (*Gateway, error) {
 
 	return &Gateway{
 		distributorProxy: distributor,
-		server:           srv,
+		// server:           srv,
 	}, nil
 }
 
