@@ -1,0 +1,27 @@
+server-address: "http://127.0.0.1:8080"
+auth-type: "basic"
+tenants:
+  - username: "username1"
+    password: "password1"
+    x-scope-orgid: "orgid"
+
+  - username: "username2"
+    password: "password2"
+    x-scope-orgid: "orgid"
+routes:
+  - path: "/api/v1/push"
+    target: "distributor"
+  - path: "/prometheus"
+    target: "query-frontend"
+  - path: "/api/v1/alerts"
+    target: "ruler"
+  - path: "/api/v1/rules"
+    target: "ruler"
+  - path: "/alertmanager"
+    target: "alertmanager"
+targets:
+  distributor: "http://127.0.0.1:8004"
+  query-frontend: "http://127.0.0.1:8004"
+  alertmanager: "http://127.0.0.1:8004"
+  ruler: "http://127.0.0.1:8004"
+  notify: "http://127.0.0.1:8100"
