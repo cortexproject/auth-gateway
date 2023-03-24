@@ -24,7 +24,7 @@ func main() {
 	conf, err := gateway.Init(filePath, logger)
 	gateway.CheckErr("reading the configuration file", err, logger)
 
-	serverAddr, err := url.Parse("http://127.0.0.1:8080")
+	serverAddr, err := url.Parse(conf.ServerAddress)
 	gateway.CheckErr("parsing the url", err, logger)
 
 	host, port, err := net.SplitHostPort(serverAddr.Host)
