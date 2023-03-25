@@ -9,12 +9,13 @@ import (
 )
 
 func CheckErr(msg string, err error, logger log.Logger) {
+	CheckErrWithExit(msg, err, logger, os.Exit)
+}
+
+func CheckErrWithExit(msg string, err error, logger log.Logger, exitFunc func(int)) {
 	if err != nil {
-		logger := level.Error(logger)
-		if msg != "" {
-			logger = log.With(logger, "msg", "error "+msg)
-		}
+		logger := log.With(level.Error(logger), "msg", "error "+msg)
 		logger.Log("err", fmt.Sprintf("%+v", err))
-		os.Exit(1)
+		exitFunc(1)
 	}
 }
