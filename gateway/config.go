@@ -3,42 +3,36 @@ package gateway
 import (
 	"os"
 
-	"github.com/go-kit/log"
 	"gopkg.in/yaml.v2"
 )
 
-type Configuration struct {
-	ServerAddress string            `yaml:"server-address"`
-	AuthType      string            `yaml:"auth-type"`
-	Tenants       []Tenant          `yaml:"tenants"`
-	Routes        []Route           `yaml:"routes"`
-	Targets       map[string]string `yaml:"targets"`
-	Logger        log.Logger
+type Config struct {
+	ServerAddress string   `yaml:"server-address"`
+	Tenants       []Tenant `yaml:"tenants"`
+	Distributor   struct {
+		URL   string   `yaml:"url"`
+		Paths []string `yaml:"paths"`
+	} `yaml:"distributor"`
 }
 
 type Tenant struct {
-	Username    string `yaml:"username"`
-	Password    string `yaml:"password"`
-	XScopeOrgId string `yaml:"x-scope-orgid"`
+	Authentication string `yaml:"authentication"`
+	Username       string `yaml:"username"`
+	Password       string `yaml:"password"`
+	ID             string `yaml:"id"`
 }
 
-type Route struct {
-	Path   string `yaml:"path"`
-	Target string `yaml:"target"`
-}
-
-func Init(filePath string, logger log.Logger) (Configuration, error) {
+func Init(filePath string) (Config, error) {
 	configFile, err := os.ReadFile(filePath)
 	if err != nil {
-		return Configuration{}, err
+		return Config{}, err
 	}
 
-	config := Configuration{}
+	config := Config{}
 	err = yaml.UnmarshalStrict(configFile, &config)
 	if err != nil {
-		return Configuration{}, err
+		return Config{}, err
 	}
 
-	config.Logger = logger
 	return config, nil
 }
