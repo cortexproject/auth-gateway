@@ -1,5 +1,11 @@
-server-address: "localhost:8080"
-auth-type: "basic"
-routes:
-  - path: "/api/v1"
-    target: "http://localhost:8081"
+server-address: localhost:8080
+tenants:
+  - authentication: basic
+    username: user1
+    password: pass1
+    id: "1"
+distributor:
+  url: http://localhost:8081
+  paths:
+    - /api/v1
+    - /api/v1/push
