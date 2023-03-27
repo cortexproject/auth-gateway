@@ -1,7 +1,8 @@
-basic:
-  - username1:
-      ID: "orgid1"
-      password: "password1"
-  - username2:
-      ID: "orgid2"
-    password: "password2"
+tenants:
+  - authentication: basic
+    username: user1
+    password: pass1
+    id: "1"
+distributor:
+  url: http://localhost:8081
+  paths: /api/v1

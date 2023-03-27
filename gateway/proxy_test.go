@@ -29,7 +29,7 @@ func TestNewProxy(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := NewProxy(tc.targetURL)
+			p, err := NewProxy(tc.targetURL, tc.name)
 			if (err != nil) != tc.expectErr {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -47,7 +47,7 @@ func TestNewProxy(t *testing.T) {
 	}
 }
 
-func TestServeHTTP(t *testing.T) {
+func TestHandler(t *testing.T) {
 	testCases := []struct {
 		name           string
 		hasAuthHeader  bool
@@ -70,7 +70,7 @@ func TestServeHTTP(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			proxy, err := NewProxy("http://example.com")
+			proxy, err := NewProxy("http://example.com", tc.name)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -84,7 +84,7 @@ func TestServeHTTP(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 
-			proxy.ServeHTTP(rr, req)
+			proxy.Handler(rr, req)
 
 			if _, ok := req.Header[tc.expectedHeader]; ok {
 				t.Errorf("Unexpected Authorization header found: %s", req.Header.Get("Authorization"))

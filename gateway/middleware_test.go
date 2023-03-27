@@ -6,70 +6,68 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-
-	"github.com/go-kit/log"
 )
 
 func TestAuthenticate(t *testing.T) {
-	logger := log.NewLogfmtLogger(os.Stdout)
+	InitLogger(os.Stdout)
 	testCases := []struct {
 		name           string
-		tenants        *Tenant
+		config         *Config
 		authHeader     string
 		expectedStatus int
 	}{
 		{
 			name:           "missing auth header",
-			tenants:        &Tenant{},
+			config:         &Config{},
 			authHeader:     "",
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name:           "missing basic auth credentials",
-			tenants:        &Tenant{},
+			config:         &Config{},
 			authHeader:     "Bearer token",
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "valid credentials",
-			tenants: &Tenant{
-				All: map[string]tenant{
-					"username1": {
-						ID:       "orgid",
-						Username: "username1",
-						Password: "password1",
+			config: &Config{
+				Tenants: []Tenant{
+					{
+						Authentication: "basic",
+						Username:       "username1",
+						Password:       "password1",
+						ID:             "orgid",
 					},
-				},
-			},
+				}},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username1:password1")),
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "wrong password",
-			tenants: &Tenant{
-				All: map[string]tenant{
-					"username1": {
-						ID:       "orgid",
-						Username: "username1",
-						Password: "password1",
+			config: &Config{
+				Tenants: []Tenant{
+					{
+						Authentication: "basic",
+						Username:       "username1",
+						Password:       "password1",
+						ID:             "orgid",
 					},
 				},
-				Logger: logger,
 			},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username1:wrong_password")),
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "no valid credentials",
-			tenants: &Tenant{
-				All: map[string]tenant{
-					"username1": {
-						ID:       "orgid",
-						Username: "username1",
-						Password: "password1",
+			config: &Config{
+				Tenants: []Tenant{
+					{
+						Authentication: "basic",
+						Username:       "username1",
+						Password:       "password1",
+						ID:             "orgid1",
 					},
 				},
-				Logger: logger,
 			},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username2:password2")),
 			expectedStatus: http.StatusUnauthorized,
@@ -86,7 +84,7 @@ func TestAuthenticate(t *testing.T) {
 
 			rw := httptest.NewRecorder()
 
-			tc.tenants.Authenticate(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tc.config.Authenticate(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})).ServeHTTP(rw, req)
 

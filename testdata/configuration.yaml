@@ -1,0 +1,17 @@
+server:
+  address: localhost
+  port: 8080
+tenants:
+  - authentication: basic
+    username: username1
+    password: password1
+    id: "orgid"
+  - authentication: basic
+    username: username2
+    password: password2
+    id: "orgid"
+distributor:
+  url: http://127.0.0.1:8081
+  paths: 
+  - /api/v1/push
+  - /api/prom/push
