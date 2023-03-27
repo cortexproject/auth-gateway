@@ -24,7 +24,10 @@ func TestInit(t *testing.T) {
 			filePath: "testdata/valid.yaml",
 			logger:   logger,
 			configFile: Config{
-				ServerAddress: "localhost:8080",
+				Server: Server{
+					Address: "localhost",
+					Port:    8080,
+				},
 				Tenants: []Tenant{
 					{
 						Authentication: "basic",

@@ -7,12 +7,17 @@ import (
 )
 
 type Config struct {
-	ServerAddress string   `yaml:"server-address"`
-	Tenants       []Tenant `yaml:"tenants"`
-	Distributor   struct {
+	Server      Server   `yaml:"server"`
+	Tenants     []Tenant `yaml:"tenants"`
+	Distributor struct {
 		URL   string   `yaml:"url"`
 		Paths []string `yaml:"paths"`
 	} `yaml:"distributor"`
+}
+
+type Server struct {
+	Address string `yaml:"address"`
+	Port    int    `yaml:"port"`
 }
 
 type Tenant struct {
