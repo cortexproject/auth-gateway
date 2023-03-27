@@ -7,13 +7,35 @@ import (
 )
 
 type Gateway struct {
-	distributorProxy *Proxy
-	server           *server.Server
+	distributorProxy   *Proxy
+	queryFrontendProxy *Proxy
+	server             *server.Server
 }
 
 var defaultDistributorAPIs = []string{
 	"/api/v1/push",
 	"/api/prom/push",
+}
+
+var defaultQueryFrontendAPIs = []string{
+	"/prometheus/api/v1/query",
+	"/api/prom/api/v1/query",
+	"/prometheus/api/v1/query_range",
+	"/api/prom/api/v1/query_range",
+	"/prometheus/api/v1/query_exemplars",
+	"/api/prom/api/v1/query_exemplars",
+	"/prometheus/api/v1/series",
+	"/api/prom/api/v1/series",
+	"/prometheus/api/v1/labels",
+	"/api/prom/api/v1/labels",
+	"/prometheus/api/v1/label/",
+	"/api/prom/api/v1/label/",
+	"/prometheus/api/v1/metadata",
+	"/api/prom/api/v1/metadata",
+	"/prometheus/api/v1/read",
+	"/api/prom/api/v1/read",
+	"/prometheus/api/v1/status/buildinfo",
+	"/api/prom/api/v1/status/buildinfo",
 }
 
 func New(config Config, srv *server.Server) (*Gateway, error) {
@@ -22,9 +44,15 @@ func New(config Config, srv *server.Server) (*Gateway, error) {
 		return nil, err
 	}
 
+	frontend, err := NewProxy(config.QueryFrontend.URL, "query-frontend")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Gateway{
-		distributorProxy: distributor,
-		server:           srv,
+		distributorProxy:   distributor,
+		queryFrontendProxy: frontend,
+		server:             srv,
 	}, nil
 }
 
@@ -33,19 +61,19 @@ func (g *Gateway) Start(config *Config) {
 }
 
 func (g *Gateway) registerRoutes(config *Config) {
-	g.registerProxyRoutes(config, http.HandlerFunc(g.distributorProxy.Handler))
+	g.registerProxyRoutes(config, config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
+	g.registerProxyRoutes(config, config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
 	g.server.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
 }
 
-func (g *Gateway) registerProxyRoutes(config *Config, handler http.Handler) {
-	if len(config.Distributor.Paths) == 0 {
-		for _, url := range defaultDistributorAPIs {
-			g.server.HTTP.Handle(url, config.Authenticate(handler))
-		}
-	} else {
-		for _, url := range config.Distributor.Paths {
-			g.server.HTTP.Handle(url, config.Authenticate(handler))
-		}
+func (g *Gateway) registerProxyRoutes(config *Config, paths []string, defaultPaths []string, handler http.Handler) {
+	pathsToRegister := defaultPaths
+	if len(paths) > 0 {
+		pathsToRegister = paths
+	}
+
+	for _, path := range pathsToRegister {
+		g.server.HTTP.Handle(path, config.Authenticate(handler))
 	}
 }
 

@@ -15,3 +15,13 @@ distributor:
   paths: 
   - /api/v1/push
   - /api/prom/push
+query-frontend:
+  url: http://127.0.0.1:8081
+  paths:
+  - /api/prom/api/v1/labels
+  - /prometheus/api/v1/label/
+  - /api/prom/api/v1/label/
+  - /prometheus/api/v1/metadata
+  - /api/prom/api/v1/metadata
+  - /prometheus/api/v1/read
+  - /api/prom/api/v1/read

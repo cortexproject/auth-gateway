@@ -13,6 +13,10 @@ type Config struct {
 		URL   string   `yaml:"url"`
 		Paths []string `yaml:"paths"`
 	} `yaml:"distributor"`
+	QueryFrontend struct {
+		URL   string   `yaml:"url"`
+		Paths []string `yaml:"paths"`
+	} `yaml:"query-frontend"`
 }
 
 type Server struct {
