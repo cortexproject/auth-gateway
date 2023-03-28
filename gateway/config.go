@@ -16,7 +16,7 @@ type Config struct {
 	QueryFrontend struct {
 		URL   string   `yaml:"url"`
 		Paths []string `yaml:"paths"`
-	} `yaml:"query-frontend"`
+	} `yaml:"frontend"`
 }
 
 type Server struct {

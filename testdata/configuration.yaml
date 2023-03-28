@@ -15,7 +15,7 @@ distributor:
   paths: 
   - /api/v1/push
   - /api/prom/push
-query-frontend:
+frontend:
   url: http://127.0.0.1:8081
   paths:
   - /api/prom/api/v1/labels
