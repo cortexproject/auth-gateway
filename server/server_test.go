@@ -22,6 +22,8 @@ func TestNew(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create server: %v", err)
 	}
+	// TODO: replace this with server.Close() or something similiar
+	defer server.HTTPListener.Close()
 
 	if server.HTTPServer.Addr != fmt.Sprintf("%s:%d", cfg.HTTPListenAddr, cfg.HTTPListenPort) {
 		t.Errorf("Expected server address to be %s:%d, but got %s", cfg.HTTPListenAddr, cfg.HTTPListenPort, server.HTTPServer.Addr)
