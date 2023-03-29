@@ -17,14 +17,32 @@ func TestAuthenticate(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:           "missing auth header",
-			config:         &Config{},
+			name: "missing auth header",
+			config: &Config{
+				Tenants: []Tenant{
+					{
+						Authentication: "basic",
+						Username:       "username1",
+						Password:       "password1",
+						ID:             "orgid1",
+					},
+				},
+			},
 			authHeader:     "",
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name:           "missing basic auth credentials",
-			config:         &Config{},
+			name: "missing basic auth credentials",
+			config: &Config{
+				Tenants: []Tenant{
+					{
+						Authentication: "basic",
+						Username:       "username1",
+						Password:       "password1",
+						ID:             "orgid1",
+					},
+				},
+			},
 			authHeader:     "Bearer token",
 			expectedStatus: http.StatusUnauthorized,
 		},
@@ -80,7 +98,10 @@ func TestAuthenticate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			req.Header.Set("Authorization", tc.authHeader)
+
+			if tc.authHeader != "" {
+				req.Header.Set("Authorization", tc.authHeader)
+			}
 
 			rw := httptest.NewRecorder()
 
