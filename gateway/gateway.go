@@ -7,17 +7,17 @@ import (
 )
 
 type Gateway struct {
-	distributorProxy   *Proxy
+	DistributorProxy   *Proxy
 	queryFrontendProxy *Proxy
-	server             *server.Server
+	Server             *server.Server
 }
 
-var defaultDistributorAPIs = []string{
+var DefaultDistributorAPIs = []string{
 	"/api/v1/push",
 	"/api/prom/push",
 }
 
-var defaultQueryFrontendAPIs = []string{
+var DefaultQueryFrontendAPIs = []string{
 	"/prometheus/api/v1/query",
 	"/api/prom/api/v1/query",
 	"/prometheus/api/v1/query_range",
@@ -38,7 +38,7 @@ var defaultQueryFrontendAPIs = []string{
 	"/api/prom/api/v1/status/buildinfo",
 }
 
-func New(config Config, srv *server.Server) (*Gateway, error) {
+func New(config *Config, srv *server.Server) (*Gateway, error) {
 	distributor, err := NewProxy(config.Distributor.URL)
 	if err != nil {
 		return nil, err
@@ -50,9 +50,9 @@ func New(config Config, srv *server.Server) (*Gateway, error) {
 	}
 
 	return &Gateway{
-		distributorProxy:   distributor,
+		DistributorProxy:   distributor,
 		queryFrontendProxy: frontend,
-		server:             srv,
+		Server:             srv,
 	}, nil
 }
 
@@ -61,9 +61,9 @@ func (g *Gateway) Start(config *Config) {
 }
 
 func (g *Gateway) registerRoutes(config *Config) {
-	g.registerProxyRoutes(config, config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
-	g.registerProxyRoutes(config, config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
-	g.server.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
+	g.registerProxyRoutes(config, config.Distributor.Paths, DefaultDistributorAPIs, http.HandlerFunc(g.DistributorProxy.Handler))
+	g.registerProxyRoutes(config, config.QueryFrontend.Paths, DefaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
+	g.Server.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
 }
 
 func (g *Gateway) registerProxyRoutes(config *Config, paths []string, defaultPaths []string, handler http.Handler) {
@@ -73,7 +73,7 @@ func (g *Gateway) registerProxyRoutes(config *Config, paths []string, defaultPat
 	}
 
 	for _, path := range pathsToRegister {
-		g.server.HTTP.Handle(path, config.Authenticate(handler))
+		g.Server.HTTP.Handle(path, config.Authenticate(handler))
 	}
 }
 
