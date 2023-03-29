@@ -11,3 +11,8 @@ distributor:
   paths:
     - /api/v1
     - /api/v1/push
+frontend:
+  url: http://localhost:8082
+  paths:
+    - /api/prom/api/v1/query
+    - /prometheus/api/v1/query_range
