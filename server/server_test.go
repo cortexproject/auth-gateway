@@ -2,31 +2,67 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestNew(t *testing.T) {
-	cfg := Config{
-		HTTPListenAddr:                "localhost",
-		HTTPListenPort:                8080,
-		ServerGracefulShutdownTimeout: time.Second * 5,
-		HTTPServerReadTimeout:         time.Second * 10,
-		HTTPServerWriteTimeout:        time.Second * 10,
-		HTTPServerIdleTimeout:         time.Second * 15,
+	testCases := []struct {
+		name    string
+		config  Config
+		wantErr error
+	}{
+		{
+			name: "invalid address",
+			config: Config{
+				HTTPListenAddr:                "http://localhost",
+				HTTPListenPort:                8080,
+				ServerGracefulShutdownTimeout: time.Second * 5,
+				HTTPServerReadTimeout:         time.Second * 10,
+				HTTPServerWriteTimeout:        time.Second * 10,
+				HTTPServerIdleTimeout:         time.Second * 15,
+			},
+			wantErr: errors.New("too many colons in address"),
+		},
+		{
+			name: "valid address",
+			config: Config{
+				HTTPListenAddr:                "localhost",
+				HTTPListenPort:                8080,
+				ServerGracefulShutdownTimeout: time.Second * 5,
+				HTTPServerReadTimeout:         time.Second * 10,
+				HTTPServerWriteTimeout:        time.Second * 10,
+				HTTPServerIdleTimeout:         time.Second * 15,
+			},
+			wantErr: nil,
+		},
 	}
 
-	server, err := New(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create server: %v", err)
-	}
-	// TODO: replace this with server.Close() or something similiar
-	defer server.HTTPListener.Close()
-
-	if server.HTTPServer.Addr != fmt.Sprintf("%s:%d", cfg.HTTPListenAddr, cfg.HTTPListenPort) {
-		t.Errorf("Expected server address to be %s:%d, but got %s", cfg.HTTPListenAddr, cfg.HTTPListenPort, server.HTTPServer.Addr)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server, err := New(tc.config)
+			if tc.wantErr != nil && err == nil {
+				t.Fatalf("Expected an error but got none. expected: %v\n", tc.wantErr)
+			}
+			if tc.wantErr == nil && err != nil {
+				t.Fatalf("Got an unexpected error: %v\n", err)
+			}
+			if tc.wantErr != nil && err != nil {
+				if !strings.Contains(err.Error(), tc.wantErr.Error()) {
+					t.Fatalf("expected %v, got %v\n", tc.wantErr, err)
+				} else {
+					return
+				}
+			}
+			defer server.HTTPListener.Close()
+			if server.HTTPServer.Addr != fmt.Sprintf("%s:%d", tc.config.HTTPListenAddr, tc.config.HTTPListenPort) {
+				t.Errorf("Expected server address to be %s:%d, but got %s", tc.config.HTTPListenAddr, tc.config.HTTPListenPort, server.HTTPServer.Addr)
+			}
+		})
 	}
 }
 
@@ -45,10 +81,13 @@ func TestRunAndShutdown(t *testing.T) {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 
+	shutdownCh := make(chan struct{})
 	go func() {
-		time.Sleep(time.Second)
+		<-shutdownCh
 		server.Shutdown()
 	}()
+
+	close(shutdownCh)
 
 	err = server.Run()
 	if err != nil {
@@ -77,6 +116,7 @@ func TestRouter(t *testing.T) {
 		t.Fatalf("Failed to create server: %v", err)
 	}
 
+	shutdownCh := make(chan struct{})
 	go func() {
 		err := server.Run()
 		if err != nil {
@@ -84,9 +124,10 @@ func TestRouter(t *testing.T) {
 		}
 	}()
 
-	time.Sleep(time.Second)
-
-	defer server.Shutdown()
+	go func() {
+		<-shutdownCh
+		server.Shutdown()
+	}()
 
 	client := http.Client{
 		Timeout: time.Second * 5,
@@ -108,4 +149,6 @@ func TestRouter(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code %d, but got %d", http.StatusOK, resp.StatusCode)
 	}
+
+	close(shutdownCh)
 }
