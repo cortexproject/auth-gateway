@@ -1,4 +1,4 @@
-package gateway_test
+package gateway
 
 import (
 	"encoding/base64"
@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortexproject/auth-gateway/gateway"
 	"github.com/cortexproject/auth-gateway/server"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +20,7 @@ func TestNewGateway(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	config := gateway.Config{
+	config := Config{
 		Distributor: struct {
 			URL   string   `yaml:"url"`
 			Paths []string `yaml:"paths"`
@@ -38,7 +37,7 @@ func TestNewGateway(t *testing.T) {
 		},
 	}
 
-	gw, err := gateway.New(&config, server)
+	gw, err := New(&config, server)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +46,7 @@ func TestNewGateway(t *testing.T) {
 }
 
 func TestStartGateway(t *testing.T) {
-	gateway.InitLogger(os.Stdout)
+	InitLogger(os.Stdout)
 
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -55,15 +54,15 @@ func TestStartGateway(t *testing.T) {
 	testCases := []struct {
 		name           string
 		authHeader     string
-		config         *gateway.Config
+		config         *Config
 		paths          []string
 		expectedStatus int
 		expectedErr    error
 	}{
 		{
 			name: "default routes",
-			config: &gateway.Config{
-				Tenants: []gateway.Tenant{
+			config: &Config{
+				Tenants: []Tenant{
 					{
 						Authentication: "basic",
 						Username:       "username",
@@ -87,13 +86,13 @@ func TestStartGateway(t *testing.T) {
 				},
 			},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
-			paths:          append(gateway.DefaultDistributorAPIs, gateway.DefaultQueryFrontendAPIs...),
+			paths:          append(DefaultDistributorAPIs, DefaultQueryFrontendAPIs...),
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "custom routes",
-			config: &gateway.Config{
-				Tenants: []gateway.Tenant{
+			config: &Config{
+				Tenants: []Tenant{
 					{
 						Authentication: "basic",
 						Username:       "username",
@@ -129,7 +128,7 @@ func TestStartGateway(t *testing.T) {
 		},
 		{
 			name: "not found route",
-			config: &gateway.Config{
+			config: &Config{
 				Distributor: struct {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
@@ -156,12 +155,12 @@ func TestStartGateway(t *testing.T) {
 		},
 		{
 			name:        "invalid distributor proxy",
-			config:      &gateway.Config{},
+			config:      &Config{},
 			expectedErr: errors.New("invalid URL scheme:"),
 		},
 		{
 			name: "invalid frontend proxy",
-			config: &gateway.Config{
+			config: &Config{
 				Distributor: struct {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
@@ -214,7 +213,7 @@ func TestStartGateway(t *testing.T) {
 	}
 }
 
-func createMockGateway(addr string, port int, config *gateway.Config) (*gateway.Gateway, error) {
+func createMockGateway(addr string, port int, config *Config) (*Gateway, error) {
 	server, err := server.New(server.Config{
 		HTTPListenAddr: addr,
 		HTTPListenPort: port,
@@ -225,7 +224,7 @@ func createMockGateway(addr string, port int, config *gateway.Config) (*gateway.
 		return nil, err
 	}
 
-	gateway, err := gateway.New(config, server)
+	gateway, err := New(config, server)
 	if err != nil {
 		// TODO: replace it with server.Close()
 		server.HTTPListener.Close()
