@@ -24,11 +24,11 @@ type Config struct {
 }
 
 type Server struct {
-	cfg          Config
-	httpListener net.Listener
+	cfg Config
 
-	HTTP       *http.ServeMux
-	HTTPServer *http.Server
+	HTTP         *http.ServeMux
+	HTTPServer   *http.Server
+	HTTPListener net.Listener
 }
 
 func New(cfg Config) (*Server, error) {
@@ -60,7 +60,7 @@ func New(cfg Config) (*Server, error) {
 
 	return &Server{
 		cfg:          cfg,
-		httpListener: httpListener,
+		HTTPListener: httpListener,
 
 		HTTP:       router,
 		HTTPServer: httpServer,
@@ -72,7 +72,7 @@ func (s *Server) Run() error {
 	errChan := make(chan error, 1)
 
 	go func() {
-		err := s.HTTPServer.Serve(s.httpListener)
+		err := s.HTTPServer.Serve(s.HTTPListener)
 		if err == http.ErrServerClosed {
 			err = nil
 		}

@@ -29,7 +29,7 @@ func main() {
 
 	defer server.Shutdown()
 
-	gtw, err := gateway.New(conf, server)
+	gtw, err := gateway.New(&conf, server)
 	gateway.CheckErr("initializing the gateway", err)
 
 	gtw.Start(&conf)
