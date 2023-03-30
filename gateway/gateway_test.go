@@ -1,4 +1,4 @@
-package gateway_test
+package gateway
 
 import (
 	"encoding/base64"
@@ -10,18 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortexproject/auth-gateway/gateway"
 	"github.com/cortexproject/auth-gateway/server"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewGateway(t *testing.T) {
-	server, err := server.New(server.Config{})
+	srv, err := server.New(server.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	config := gateway.Config{
+	config := Config{
 		Distributor: struct {
 			URL   string   `yaml:"url"`
 			Paths []string `yaml:"paths"`
@@ -38,7 +37,7 @@ func TestNewGateway(t *testing.T) {
 		},
 	}
 
-	gw, err := gateway.New(&config, server)
+	gw, err := New(&config, srv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +46,7 @@ func TestNewGateway(t *testing.T) {
 }
 
 func TestStartGateway(t *testing.T) {
-	gateway.InitLogger(os.Stdout)
+	InitLogger(os.Stdout)
 
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -55,15 +54,15 @@ func TestStartGateway(t *testing.T) {
 	testCases := []struct {
 		name           string
 		authHeader     string
-		config         *gateway.Config
+		config         *Config
 		paths          []string
 		expectedStatus int
 		expectedErr    error
 	}{
 		{
 			name: "default routes",
-			config: &gateway.Config{
-				Tenants: []gateway.Tenant{
+			config: &Config{
+				Tenants: []Tenant{
 					{
 						Authentication: "basic",
 						Username:       "username",
@@ -86,14 +85,35 @@ func TestStartGateway(t *testing.T) {
 					Paths: nil,
 				},
 			},
-			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
-			paths:          append(gateway.DefaultDistributorAPIs, gateway.DefaultQueryFrontendAPIs...),
+			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
+			paths: []string{
+				"/api/v1/push",
+				"/api/prom/push",
+				"/prometheus/api/v1/query",
+				"/api/prom/api/v1/query",
+				"/prometheus/api/v1/query_range",
+				"/api/prom/api/v1/query_range",
+				"/prometheus/api/v1/query_exemplars",
+				"/api/prom/api/v1/query_exemplars",
+				"/prometheus/api/v1/series",
+				"/api/prom/api/v1/series",
+				"/prometheus/api/v1/labels",
+				"/api/prom/api/v1/labels",
+				"/prometheus/api/v1/label/",
+				"/api/prom/api/v1/label/",
+				"/prometheus/api/v1/metadata",
+				"/api/prom/api/v1/metadata",
+				"/prometheus/api/v1/read",
+				"/api/prom/api/v1/read",
+				"/prometheus/api/v1/status/buildinfo",
+				"/api/prom/api/v1/status/buildinfo",
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "custom routes",
-			config: &gateway.Config{
-				Tenants: []gateway.Tenant{
+			config: &Config{
+				Tenants: []Tenant{
 					{
 						Authentication: "basic",
 						Username:       "username",
@@ -129,7 +149,7 @@ func TestStartGateway(t *testing.T) {
 		},
 		{
 			name: "not found route",
-			config: &gateway.Config{
+			config: &Config{
 				Distributor: struct {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
@@ -156,12 +176,12 @@ func TestStartGateway(t *testing.T) {
 		},
 		{
 			name:        "invalid distributor proxy",
-			config:      &gateway.Config{},
+			config:      &Config{},
 			expectedErr: errors.New("invalid URL scheme:"),
 		},
 		{
 			name: "invalid frontend proxy",
-			config: &gateway.Config{
+			config: &Config{
 				Distributor: struct {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
@@ -191,11 +211,11 @@ func TestStartGateway(t *testing.T) {
 				}
 			}
 
-			mockServer := httptest.NewServer(gw.Server.HTTP)
+			mockServer := httptest.NewServer(gw.srv.HTTP)
 			defer mockServer.Close()
 
 			gw.Start(tc.config)
-			defer gw.Server.HTTPListener.Close()
+			defer gw.srv.HTTPListener.Close()
 
 			client := &http.Client{}
 
@@ -214,8 +234,8 @@ func TestStartGateway(t *testing.T) {
 	}
 }
 
-func createMockGateway(addr string, port int, config *gateway.Config) (*gateway.Gateway, error) {
-	server, err := server.New(server.Config{
+func createMockGateway(addr string, port int, config *Config) (*Gateway, error) {
+	srv, err := server.New(server.Config{
 		HTTPListenAddr: addr,
 		HTTPListenPort: port,
 
@@ -225,10 +245,10 @@ func createMockGateway(addr string, port int, config *gateway.Config) (*gateway.
 		return nil, err
 	}
 
-	gateway, err := gateway.New(config, server)
+	gateway, err := New(config, srv)
 	if err != nil {
 		// TODO: replace it with server.Close()
-		server.HTTPListener.Close()
+		srv.HTTPListener.Close()
 		return nil, err
 	}
 
