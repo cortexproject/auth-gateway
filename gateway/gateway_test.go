@@ -15,7 +15,7 @@ import (
 )
 
 func TestNewGateway(t *testing.T) {
-	server, err := server.New(server.Config{})
+	srv, err := server.New(server.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestNewGateway(t *testing.T) {
 		},
 	}
 
-	gw, err := New(&config, server)
+	gw, err := New(&config, srv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +235,7 @@ func TestStartGateway(t *testing.T) {
 }
 
 func createMockGateway(addr string, port int, config *Config) (*Gateway, error) {
-	server, err := server.New(server.Config{
+	srv, err := server.New(server.Config{
 		HTTPListenAddr: addr,
 		HTTPListenPort: port,
 
@@ -245,10 +245,10 @@ func createMockGateway(addr string, port int, config *Config) (*Gateway, error) 
 		return nil, err
 	}
 
-	gateway, err := New(config, server)
+	gateway, err := New(config, srv)
 	if err != nil {
 		// TODO: replace it with server.Close()
-		server.HTTPListener.Close()
+		srv.HTTPListener.Close()
 		return nil, err
 	}
 
