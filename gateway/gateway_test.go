@@ -85,8 +85,29 @@ func TestStartGateway(t *testing.T) {
 					Paths: nil,
 				},
 			},
-			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
-			paths:          append(DefaultDistributorAPIs, DefaultQueryFrontendAPIs...),
+			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
+			paths: []string{
+				"/api/v1/push",
+				"/api/prom/push",
+				"/prometheus/api/v1/query",
+				"/api/prom/api/v1/query",
+				"/prometheus/api/v1/query_range",
+				"/api/prom/api/v1/query_range",
+				"/prometheus/api/v1/query_exemplars",
+				"/api/prom/api/v1/query_exemplars",
+				"/prometheus/api/v1/series",
+				"/api/prom/api/v1/series",
+				"/prometheus/api/v1/labels",
+				"/api/prom/api/v1/labels",
+				"/prometheus/api/v1/label/",
+				"/api/prom/api/v1/label/",
+				"/prometheus/api/v1/metadata",
+				"/api/prom/api/v1/metadata",
+				"/prometheus/api/v1/read",
+				"/api/prom/api/v1/read",
+				"/prometheus/api/v1/status/buildinfo",
+				"/api/prom/api/v1/status/buildinfo",
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -190,11 +211,11 @@ func TestStartGateway(t *testing.T) {
 				}
 			}
 
-			mockServer := httptest.NewServer(gw.Server.HTTP)
+			mockServer := httptest.NewServer(gw.srv.HTTP)
 			defer mockServer.Close()
 
 			gw.Start(tc.config)
-			defer gw.Server.HTTPListener.Close()
+			defer gw.srv.HTTPListener.Close()
 
 			client := &http.Client{}
 

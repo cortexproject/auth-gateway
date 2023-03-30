@@ -7,17 +7,17 @@ import (
 )
 
 type Gateway struct {
-	DistributorProxy   *Proxy
+	distributorProxy   *Proxy
 	queryFrontendProxy *Proxy
-	Server             *server.Server
+	srv                *server.Server
 }
 
-var DefaultDistributorAPIs = []string{
+var defaultDistributorAPIs = []string{
 	"/api/v1/push",
 	"/api/prom/push",
 }
 
-var DefaultQueryFrontendAPIs = []string{
+var defaultQueryFrontendAPIs = []string{
 	"/prometheus/api/v1/query",
 	"/api/prom/api/v1/query",
 	"/prometheus/api/v1/query_range",
@@ -50,9 +50,9 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 	}
 
 	return &Gateway{
-		DistributorProxy:   distributor,
+		distributorProxy:   distributor,
 		queryFrontendProxy: frontend,
-		Server:             srv,
+		srv:                srv,
 	}, nil
 }
 
@@ -61,9 +61,9 @@ func (g *Gateway) Start(config *Config) {
 }
 
 func (g *Gateway) registerRoutes(config *Config) {
-	g.registerProxyRoutes(config, config.Distributor.Paths, DefaultDistributorAPIs, http.HandlerFunc(g.DistributorProxy.Handler))
-	g.registerProxyRoutes(config, config.QueryFrontend.Paths, DefaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
-	g.Server.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
+	g.registerProxyRoutes(config, config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
+	g.registerProxyRoutes(config, config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
+	g.srv.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
 }
 
 func (g *Gateway) registerProxyRoutes(config *Config, paths []string, defaultPaths []string, handler http.Handler) {
@@ -73,7 +73,7 @@ func (g *Gateway) registerProxyRoutes(config *Config, paths []string, defaultPat
 	}
 
 	for _, path := range pathsToRegister {
-		g.Server.HTTP.Handle(path, config.Authenticate(handler))
+		g.srv.HTTP.Handle(path, config.Authenticate(handler))
 	}
 }
 
