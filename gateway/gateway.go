@@ -44,7 +44,7 @@ var defaultAlertManagerAPIs = []string{
 	"/alertmanager",
 	"/api/prom",
 	"/multitenant_alertmanager/delete_tenant_config",
-	"/api/v1/alerts", // POST, DELETE methods are disabled by default
+	"/api/v1/alerts",
 }
 
 var defaultRulerAPIs = []string{
