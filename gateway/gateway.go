@@ -9,6 +9,7 @@ import (
 type Gateway struct {
 	distributorProxy   *Proxy
 	queryFrontendProxy *Proxy
+	alertManagerProxy  *Proxy
 	srv                *server.Server
 }
 
@@ -38,6 +39,13 @@ var defaultQueryFrontendAPIs = []string{
 	"/api/prom/api/v1/status/buildinfo",
 }
 
+var defaultAlertManagerAPIs = []string{
+	"/alertmanager",
+	"/api/prom",
+	"/multitenant_alertmanager/delete_tenant_config",
+	"/api/v1/alerts",
+}
+
 func New(config *Config, srv *server.Server) (*Gateway, error) {
 	distributor, err := NewProxy(config.Distributor.URL)
 	if err != nil {
@@ -49,9 +57,15 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 		return nil, err
 	}
 
+	alertmanager, err := NewProxy(config.AlertManager.URL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Gateway{
 		distributorProxy:   distributor,
 		queryFrontendProxy: frontend,
+		alertManagerProxy:  alertmanager,
 		srv:                srv,
 	}, nil
 }
@@ -63,6 +77,7 @@ func (g *Gateway) Start(config *Config) {
 func (g *Gateway) registerRoutes(config *Config) {
 	g.registerProxyRoutes(config, config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
 	g.registerProxyRoutes(config, config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
+	g.registerProxyRoutes(config, config.AlertManager.Paths, defaultAlertManagerAPIs, http.HandlerFunc(g.alertManagerProxy.Handler))
 	g.srv.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
 }
 

@@ -50,6 +50,16 @@ func TestInit(t *testing.T) {
 						"/prometheus/api/v1/query_range",
 					},
 				},
+				AlertManager: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL: "http://localhost:8081",
+					Paths: []string{
+						"/alertmanager",
+						"/multitenant_alertmanager/delete_tenant_config",
+					},
+				},
 			},
 			wantErr: nil,
 		},

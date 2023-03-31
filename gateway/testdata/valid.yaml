@@ -16,3 +16,8 @@ frontend:
   paths:
     - /api/prom/api/v1/query
     - /prometheus/api/v1/query_range
+alertmanager:
+  url: http://localhost:8081
+  paths:
+    - /alertmanager
+    - /multitenant_alertmanager/delete_tenant_config

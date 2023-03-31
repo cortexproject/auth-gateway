@@ -35,6 +35,13 @@ func TestNewGateway(t *testing.T) {
 			URL:   "http://localhost:9000",
 			Paths: nil,
 		},
+		AlertManager: struct {
+			URL   string   `yaml:"url"`
+			Paths []string `yaml:"paths"`
+		}{
+			URL:   "http://localhost:8000",
+			Paths: nil,
+		},
 	}
 
 	gw, err := New(&config, srv)
@@ -50,6 +57,7 @@ func TestStartGateway(t *testing.T) {
 
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	alertManagerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	testCases := []struct {
 		name           string
@@ -84,11 +92,21 @@ func TestStartGateway(t *testing.T) {
 					URL:   frontendServer.URL,
 					Paths: nil,
 				},
+				AlertManager: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   alertManagerServer.URL,
+					Paths: []string{},
+				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
 			paths: []string{
+				// distributor endpoints
 				"/api/v1/push",
 				"/api/prom/push",
+
+				// query-frontend endpoints
 				"/prometheus/api/v1/query",
 				"/api/prom/api/v1/query",
 				"/prometheus/api/v1/query_range",
@@ -107,6 +125,12 @@ func TestStartGateway(t *testing.T) {
 				"/api/prom/api/v1/read",
 				"/prometheus/api/v1/status/buildinfo",
 				"/api/prom/api/v1/status/buildinfo",
+
+				// alertmanager endpoints
+				"/alertmanager",
+				"/api/prom",
+				"/multitenant_alertmanager/delete_tenant_config",
+				"/api/v1/alerts",
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -139,6 +163,15 @@ func TestStartGateway(t *testing.T) {
 						"/test/frontend",
 					},
 				},
+				AlertManager: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL: alertManagerServer.URL,
+					Paths: []string{
+						"/test/alertmanager",
+					},
+				},
 			},
 			paths: []string{
 				"/test/distributor",
@@ -154,19 +187,22 @@ func TestStartGateway(t *testing.T) {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
 				}{
-					URL: distributorServer.URL,
-					Paths: []string{
-						"/test/distributor",
-					},
+					URL:   distributorServer.URL,
+					Paths: nil,
 				},
 				QueryFrontend: struct {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
 				}{
-					URL: frontendServer.URL,
-					Paths: []string{
-						"/test/frontend",
-					},
+					URL:   frontendServer.URL,
+					Paths: nil,
+				},
+				AlertManager: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   alertManagerServer.URL,
+					Paths: nil,
 				},
 			},
 			paths: []string{
@@ -187,6 +223,26 @@ func TestStartGateway(t *testing.T) {
 					Paths []string `yaml:"paths"`
 				}{
 					URL:   distributorServer.URL,
+					Paths: []string{},
+				},
+			},
+			expectedErr: errors.New("invalid URL scheme:"),
+		},
+		{
+			name: "invalid alertmanager proxy",
+			config: &Config{
+				Distributor: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   distributorServer.URL,
+					Paths: []string{},
+				},
+				QueryFrontend: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   frontendServer.URL,
 					Paths: []string{},
 				},
 			},
