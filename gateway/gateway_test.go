@@ -200,8 +200,10 @@ func TestStartGateway(t *testing.T) {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
 				}{
-					URL:   rulerServer.URL,
-					Paths: []string{"/test/ruler"},
+					URL: rulerServer.URL,
+					Paths: []string{
+						"/test/ruler",
+					},
 				},
 			},
 			paths: []string{
