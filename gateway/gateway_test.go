@@ -42,6 +42,13 @@ func TestNewGateway(t *testing.T) {
 			URL:   "http://localhost:8000",
 			Paths: nil,
 		},
+		Ruler: struct {
+			URL   string   `yaml:"url"`
+			Paths []string `yaml:"paths"`
+		}{
+			URL:   "http://localhost:9000",
+			Paths: nil,
+		},
 	}
 
 	gw, err := New(&config, srv)
@@ -58,6 +65,7 @@ func TestStartGateway(t *testing.T) {
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	alertManagerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	rulerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	testCases := []struct {
 		name           string
@@ -97,7 +105,14 @@ func TestStartGateway(t *testing.T) {
 					Paths []string `yaml:"paths"`
 				}{
 					URL:   alertManagerServer.URL,
-					Paths: []string{},
+					Paths: nil,
+				},
+				Ruler: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   rulerServer.URL,
+					Paths: nil,
 				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
@@ -131,6 +146,15 @@ func TestStartGateway(t *testing.T) {
 				"/api/prom",
 				"/multitenant_alertmanager/delete_tenant_config",
 				"/api/v1/alerts",
+
+				// ruler endpoints
+				"/prometheus/api/v1/rules",
+				"/api/prom/api/v1/rules",
+				"/prometheus/api/v1/alerts",
+				"/api/prom/api/v1/alerts",
+				"/api/v1/rules/",
+				"/api/prom/rules/",
+				"/ruler/delete_tenant_config",
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -172,6 +196,13 @@ func TestStartGateway(t *testing.T) {
 						"/test/alertmanager",
 					},
 				},
+				Ruler: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   rulerServer.URL,
+					Paths: []string{"/test/ruler"},
+				},
 			},
 			paths: []string{
 				"/test/distributor",
@@ -204,6 +235,13 @@ func TestStartGateway(t *testing.T) {
 					URL:   alertManagerServer.URL,
 					Paths: nil,
 				},
+				Ruler: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   rulerServer.URL,
+					Paths: nil,
+				},
 			},
 			paths: []string{
 				"/not/found",
@@ -223,7 +261,7 @@ func TestStartGateway(t *testing.T) {
 					Paths []string `yaml:"paths"`
 				}{
 					URL:   distributorServer.URL,
-					Paths: []string{},
+					Paths: nil,
 				},
 			},
 			expectedErr: errors.New("invalid URL scheme:"),
@@ -236,14 +274,41 @@ func TestStartGateway(t *testing.T) {
 					Paths []string `yaml:"paths"`
 				}{
 					URL:   distributorServer.URL,
-					Paths: []string{},
+					Paths: nil,
 				},
 				QueryFrontend: struct {
 					URL   string   `yaml:"url"`
 					Paths []string `yaml:"paths"`
 				}{
 					URL:   frontendServer.URL,
-					Paths: []string{},
+					Paths: nil,
+				},
+			},
+			expectedErr: errors.New("invalid URL scheme:"),
+		},
+		{
+			name: "invalid ruler proxy",
+			config: &Config{
+				Distributor: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   distributorServer.URL,
+					Paths: nil,
+				},
+				QueryFrontend: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   frontendServer.URL,
+					Paths: nil,
+				},
+				AlertManager: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL:   alertManagerServer.URL,
+					Paths: nil,
 				},
 			},
 			expectedErr: errors.New("invalid URL scheme:"),

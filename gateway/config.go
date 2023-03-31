@@ -21,6 +21,10 @@ type Config struct {
 		URL   string   `yaml:"url"`
 		Paths []string `yaml:"paths"`
 	} `yaml:"alertmanager"`
+	Ruler struct {
+		URL   string   `yaml:"url"`
+		Paths []string `yaml:"paths"`
+	} `yaml:"ruler"`
 }
 
 type Server struct {

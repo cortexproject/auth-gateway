@@ -60,6 +60,16 @@ func TestInit(t *testing.T) {
 						"/multitenant_alertmanager/delete_tenant_config",
 					},
 				},
+				Ruler: struct {
+					URL   string   `yaml:"url"`
+					Paths []string `yaml:"paths"`
+				}{
+					URL: "http://localhost:8082",
+					Paths: []string{
+						"/api/prom/api/v1/rules",
+						"/prometheus/api/v1/alerts",
+					},
+				},
 			},
 			wantErr: nil,
 		},

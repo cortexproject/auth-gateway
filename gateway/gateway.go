@@ -10,6 +10,7 @@ type Gateway struct {
 	distributorProxy   *Proxy
 	queryFrontendProxy *Proxy
 	alertManagerProxy  *Proxy
+	rulerProxy         *Proxy
 	srv                *server.Server
 }
 
@@ -43,7 +44,17 @@ var defaultAlertManagerAPIs = []string{
 	"/alertmanager",
 	"/api/prom",
 	"/multitenant_alertmanager/delete_tenant_config",
-	"/api/v1/alerts",
+	"/api/v1/alerts", // POST, DELETE methods are disabled by default
+}
+
+var defaultRulerAPIs = []string{
+	"/prometheus/api/v1/rules",
+	"/api/prom/api/v1/rules",
+	"/prometheus/api/v1/alerts",
+	"/api/prom/api/v1/alerts",
+	"/api/v1/rules/",
+	"/api/prom/rules/",
+	"/ruler/delete_tenant_config",
 }
 
 func New(config *Config, srv *server.Server) (*Gateway, error) {
@@ -62,10 +73,16 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 		return nil, err
 	}
 
+	ruler, err := NewProxy(config.Ruler.URL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Gateway{
 		distributorProxy:   distributor,
 		queryFrontendProxy: frontend,
 		alertManagerProxy:  alertmanager,
+		rulerProxy:         ruler,
 		srv:                srv,
 	}, nil
 }
@@ -78,6 +95,7 @@ func (g *Gateway) registerRoutes(config *Config) {
 	g.registerProxyRoutes(config, config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
 	g.registerProxyRoutes(config, config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
 	g.registerProxyRoutes(config, config.AlertManager.Paths, defaultAlertManagerAPIs, http.HandlerFunc(g.alertManagerProxy.Handler))
+	g.registerProxyRoutes(config, config.Ruler.Paths, defaultRulerAPIs, http.HandlerFunc(g.rulerProxy.Handler))
 	g.srv.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
 }
 
