@@ -2,8 +2,18 @@ package gateway
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-kit/log/level"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+var requestDuration = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Namespace: "cortex",
+		Name:      "request_duration_seconds",
+		Help:      "Time (in seconds) spent serving HTTP requests.",
+	}, []string{"method", "route", "status_code", "ws"},
 )
 
 func (conf *Config) Authenticate(h http.Handler) http.Handler {
@@ -18,12 +28,15 @@ func (conf *Config) Authenticate(h http.Handler) http.Handler {
 			}
 			// add other authentication methods if necessary
 		}
-
 		if !ok {
 			level.Debug(logger).Log("msg", "No valid tenant credentials are found")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		startTime := time.Now()
+		duration := time.Since(startTime)
+		requestDuration.WithLabelValues(r.Method, r.URL.Path, "status_code", "false").Observe(duration.Seconds())
 
 		h.ServeHTTP(w, r)
 	})

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cortexproject/auth-gateway/server"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -217,12 +218,12 @@ func TestStartGateway(t *testing.T) {
 			gw.Start(tc.config)
 			defer gw.srv.HTTPListener.Close()
 
-			client := &http.Client{}
+			client := mockServer.Client()
 
 			for _, path := range tc.paths {
 				req, _ := http.NewRequest("GET", mockServer.URL+path, nil)
 				req.Header.Set("Authorization", tc.authHeader)
-				resp, _ := client.Do(req)
+				resp, err := client.Do(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -230,6 +231,9 @@ func TestStartGateway(t *testing.T) {
 
 				assert.Equal(t, tc.expectedStatus, resp.StatusCode)
 			}
+			t.Cleanup(func() {
+				prometheus.Unregister(requestDuration)
+			})
 		})
 	}
 }

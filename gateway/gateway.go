@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/cortexproject/auth-gateway/server"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Gateway struct {
@@ -57,6 +59,7 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 }
 
 func (g *Gateway) Start(config *Config) {
+	prometheus.MustRegister(requestDuration)
 	g.registerRoutes(config)
 }
 
@@ -64,6 +67,7 @@ func (g *Gateway) registerRoutes(config *Config) {
 	g.registerProxyRoutes(config, config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
 	g.registerProxyRoutes(config, config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
 	g.srv.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
+	g.srv.HTTP.Handle("/metrics", promhttp.Handler())
 }
 
 func (g *Gateway) registerProxyRoutes(config *Config, paths []string, defaultPaths []string, handler http.Handler) {
