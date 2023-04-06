@@ -24,6 +24,8 @@ type Config struct {
 	HTTPServerWriteTimeout        time.Duration
 	HTTPServerIdleTimeout         time.Duration
 
+	HTTPMiddleware []middleware.Interface
+
 	Router *http.ServeMux
 }
 
@@ -63,14 +65,15 @@ func New(cfg Config) (*Server, error) {
 	prometheus.MustRegister(requestDuration)
 
 	router.Handle("/metrics", promhttp.Handler())
-	httpMiddlewares := []middleware.Interface{
-		middleware.Instrument{
-			Duration: requestDuration,
-		},
-	}
+
+	httpMiddleware := cfg.HTTPMiddleware
+	httpMiddleware = append(httpMiddleware, middleware.Instrument{
+		Duration: requestDuration,
+	})
+
 	httpServer := &http.Server{
 		Addr:    listenAddr,
-		Handler: middleware.Merge(httpMiddlewares...).Wrap(router),
+		Handler: middleware.Merge(httpMiddleware...).Wrap(router),
 
 		ReadTimeout:  cfg.HTTPServerReadTimeout,
 		WriteTimeout: cfg.HTTPServerWriteTimeout,

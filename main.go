@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/cortexproject/auth-gateway/gateway"
+	"github.com/cortexproject/auth-gateway/middleware"
 	"github.com/cortexproject/auth-gateway/server"
 )
 
@@ -23,6 +24,9 @@ func main() {
 	serverConf := server.Config{
 		HTTPListenAddr: conf.Server.Address,
 		HTTPListenPort: conf.Server.Port,
+		HTTPMiddleware: []middleware.Interface{
+			gateway.NewAuthentication(&conf),
+		},
 	}
 	server, err := server.New(serverConf)
 	gateway.CheckErr("initializing the server", err)

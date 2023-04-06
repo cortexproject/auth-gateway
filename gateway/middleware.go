@@ -10,6 +10,12 @@ type Authentication struct {
 	config *Config
 }
 
+func NewAuthentication(config *Config) *Authentication {
+	return &Authentication{
+		config: config,
+	}
+}
+
 func (a Authentication) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ok := false
