@@ -6,6 +6,10 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/cortexproject/auth-gateway/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const DefaultNetwork = "tcp"
@@ -49,9 +53,24 @@ func New(cfg Config) (*Server, error) {
 		router = http.NewServeMux()
 	}
 
+	requestDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "cortex",
+			Name:      "request_duration_seconds",
+			Help:      "Time (in seconds) spent serving HTTP requests.",
+		}, []string{"method", "route", "status_code", "ws"},
+	)
+	prometheus.MustRegister(requestDuration)
+
+	router.Handle("/metrics", promhttp.Handler())
+	httpMiddlewares := []middleware.Interface{
+		middleware.Instrument{
+			Duration: requestDuration,
+		},
+	}
 	httpServer := &http.Server{
 		Addr:    listenAddr,
-		Handler: router,
+		Handler: middleware.Merge(httpMiddlewares...).Wrap(router),
 
 		ReadTimeout:  cfg.HTTPServerReadTimeout,
 		WriteTimeout: cfg.HTTPServerWriteTimeout,
