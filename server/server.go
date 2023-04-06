@@ -9,6 +9,7 @@ import (
 
 	"github.com/cortexproject/auth-gateway/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -31,6 +32,8 @@ type Config struct {
 
 type Server struct {
 	cfg Config
+
+	PromRegistery *prometheus.Registry
 
 	HTTP         *http.ServeMux
 	HTTPServer   *http.Server
@@ -55,14 +58,14 @@ func New(cfg Config) (*Server, error) {
 		router = http.NewServeMux()
 	}
 
-	requestDuration := prometheus.NewHistogramVec(
+	reg := prometheus.NewRegistry()
+	requestDuration := promauto.With(reg).NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "cortex",
 			Name:      "request_duration_seconds",
 			Help:      "Time (in seconds) spent serving HTTP requests.",
 		}, []string{"method", "route", "status_code", "ws"},
 	)
-	prometheus.MustRegister(requestDuration)
 
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -83,6 +86,8 @@ func New(cfg Config) (*Server, error) {
 
 	return &Server{
 		cfg: cfg,
+
+		PromRegistery: reg,
 
 		HTTP:         router,
 		HTTPServer:   httpServer,
