@@ -59,11 +59,11 @@ func New(cfg Config) (*Server, error) {
 	}
 
 	return &Server{
-		cfg:          cfg,
-		HTTPListener: httpListener,
+		cfg: cfg,
 
-		HTTP:       router,
-		HTTPServer: httpServer,
+		HTTP:         router,
+		HTTPServer:   httpServer,
+		HTTPListener: httpListener,
 	}, nil
 }
 
