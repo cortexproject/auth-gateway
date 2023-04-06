@@ -66,10 +66,11 @@ func New(cfg Config) (*Server, error) {
 
 	router.Handle("/metrics", promhttp.Handler())
 
-	httpMiddleware := cfg.HTTPMiddleware
-	httpMiddleware = append(httpMiddleware, middleware.Instrument{
-		Duration: requestDuration,
-	})
+	httpMiddleware := append([]middleware.Interface{
+		middleware.Instrument{
+			Duration: requestDuration,
+		},
+	}, cfg.HTTPMiddleware...)
 
 	httpServer := &http.Server{
 		Addr:    listenAddr,
