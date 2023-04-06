@@ -2,24 +2,18 @@ package gateway
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/go-kit/log/level"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
-var requestDuration = prometheus.NewHistogramVec(
-	prometheus.HistogramOpts{
-		Namespace: "cortex",
-		Name:      "request_duration_seconds",
-		Help:      "Time (in seconds) spent serving HTTP requests.",
-	}, []string{"method", "route", "status_code", "ws"},
-)
+type Authentication struct {
+	config *Config
+}
 
-func (conf *Config) Authenticate(h http.Handler) http.Handler {
+func (a Authentication) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ok := false
-		for _, tenant := range conf.Tenants {
+		for _, tenant := range a.config.Tenants {
 			if tenant.Authentication == "basic" {
 				ok = tenant.basicAuth(w, r)
 				if ok {
@@ -34,11 +28,7 @@ func (conf *Config) Authenticate(h http.Handler) http.Handler {
 			return
 		}
 
-		startTime := time.Now()
-		duration := time.Since(startTime)
-		requestDuration.WithLabelValues(r.Method, r.URL.Path, "status_code", "false").Observe(duration.Seconds())
-
-		h.ServeHTTP(w, r)
+		next.ServeHTTP(w, r)
 	})
 }
 
