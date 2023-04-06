@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cortexproject/auth-gateway/server"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -231,9 +230,6 @@ func TestStartGateway(t *testing.T) {
 
 				assert.Equal(t, tc.expectedStatus, resp.StatusCode)
 			}
-			t.Cleanup(func() {
-				prometheus.Unregister(requestDuration)
-			})
 		})
 	}
 }

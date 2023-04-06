@@ -105,7 +105,8 @@ func TestAuthenticate(t *testing.T) {
 
 			rw := httptest.NewRecorder()
 
-			tc.config.Authenticate(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			auth := NewAuthentication(tc.config)
+			auth.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})).ServeHTTP(rw, req)
 
