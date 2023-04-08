@@ -67,7 +67,7 @@ func New(cfg Config) (*Server, error) {
 		}, []string{"method", "route", "status_code", "ws"},
 	)
 
-	router.Handle("/metrics", promhttp.Handler())
+	router.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 	httpMiddleware := append([]middleware.Interface{
 		middleware.Instrument{
