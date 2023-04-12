@@ -140,11 +140,17 @@ func New(cfg Config) (*Server, error) {
 			Duration: requestDuration,
 		},
 	}
-	unAuthServer, _ := initUnAuthServer(&cfg, append(prometheusMiddleware, cfg.UnAuthorizedHTTPMiddleware...))
+	unAuthServer, err := initUnAuthServer(&cfg, append(prometheusMiddleware, cfg.UnAuthorizedHTTPMiddleware...))
+	if err != nil {
+		return nil, err
+	}
 	registerMetrics(unAuthServer, reg)
 
 	httpMiddleware := append(prometheusMiddleware, cfg.HTTPMiddleware...)
-	authServer, _ := initAuthServer(&cfg, httpMiddleware)
+	authServer, err := initAuthServer(&cfg, httpMiddleware)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Server{
 		cfg:           cfg,
@@ -198,6 +204,7 @@ func (s *server) shutdown(gracefulShutdownTimeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
 	defer cancel()
 
+	s.httpListener.Close()
 	s.httpServer.Shutdown(ctx)
 }
 
