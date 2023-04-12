@@ -63,7 +63,7 @@ func (g *Gateway) Start(config *Config) {
 func (g *Gateway) registerRoutes(config *Config) {
 	g.registerProxyRoutes(config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
 	g.registerProxyRoutes(config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
-	g.srv.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
+	g.srv.RegisterTo("/", http.HandlerFunc(g.notFoundHandler), server.UNAUTH)
 }
 
 func (g *Gateway) registerProxyRoutes(paths []string, defaultPaths []string, handler http.Handler) {
@@ -73,7 +73,7 @@ func (g *Gateway) registerProxyRoutes(paths []string, defaultPaths []string, han
 	}
 
 	for _, path := range pathsToRegister {
-		g.srv.HTTP.Handle(path, handler)
+		g.srv.RegisterTo(path, handler, server.AUTH)
 	}
 }
 
