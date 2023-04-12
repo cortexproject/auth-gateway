@@ -196,7 +196,7 @@ func TestStartGateway(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gw, err := createMockGateway("localhost", 8080, tc.config)
+			gw, err := createMockGateway("localhost", 8080, 8081, tc.config)
 			if tc.expectedErr == nil && err != nil {
 				t.Fatalf("Unexpected error when creating the gateway: %v\n", err)
 			}
@@ -211,11 +211,11 @@ func TestStartGateway(t *testing.T) {
 				}
 			}
 
-			mockServer := httptest.NewServer(gw.srv.HTTP)
+			authHandler, _ := gw.srv.GetHTTPHandlers()
+			mockServer := httptest.NewServer(authHandler)
 			defer mockServer.Close()
 
 			gw.Start(tc.config)
-			defer gw.srv.HTTPListener.Close()
 
 			client := mockServer.Client()
 
@@ -230,25 +230,29 @@ func TestStartGateway(t *testing.T) {
 
 				assert.Equal(t, tc.expectedStatus, resp.StatusCode)
 			}
+			gw.srv.Shutdown()
 		})
 	}
+
 }
 
-func createMockGateway(addr string, port int, config *Config) (*Gateway, error) {
-	srv, err := server.New(server.Config{
-		HTTPListenAddr: addr,
-		HTTPListenPort: port,
-
+func createMockGateway(addr string, port int, unAuthPort int, config *Config) (*Gateway, error) {
+	cfg := server.Config{
+		HTTPListenAddr:                addr,
+		HTTPListenPort:                port,
+		UnAuthorizedHTTPListenAddr:    addr,
+		UnAuthorizedHTTPListenPort:    unAuthPort,
 		ServerGracefulShutdownTimeout: 2 * time.Second,
-	})
+	}
+
+	srv, err := server.New(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	gateway, err := New(config, srv)
 	if err != nil {
-		// TODO: replace it with server.Close()
-		srv.HTTPListener.Close()
+		srv.Shutdown()
 		return nil, err
 	}
 

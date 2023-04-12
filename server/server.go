@@ -211,3 +211,7 @@ func (s *server) shutdown(gracefulShutdownTimeout time.Duration) {
 func registerMetrics(srv *server, reg *prometheus.Registry) {
 	srv.http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 }
+
+func (s *Server) GetHTTPHandlers() (http.Handler, http.Handler) {
+	return s.authServer.http, s.unAuthServer.http
+}
