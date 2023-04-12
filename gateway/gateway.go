@@ -63,7 +63,6 @@ func (g *Gateway) Start(config *Config) {
 func (g *Gateway) registerRoutes(config *Config) {
 	g.registerProxyRoutes(config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
 	g.registerProxyRoutes(config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
-	// this endpoint is different than above, it always produces unauthorized message
 	g.srv.HTTP.Handle("/", http.HandlerFunc(g.notFoundHandler))
 }
 

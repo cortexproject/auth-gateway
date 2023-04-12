@@ -108,7 +108,7 @@ func TestRouter(t *testing.T) {
 		HTTPServerReadTimeout:         time.Second * 10,
 		HTTPServerWriteTimeout:        time.Second * 10,
 		HTTPServerIdleTimeout:         time.Second * 15,
-		Router:                        router,
+		HTTPRouter:                    router,
 	}
 
 	server, err := New(cfg)
