@@ -82,15 +82,11 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 }
 
 func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, error) {
-	// use any available port
-	listenAddr := fmt.Sprintf("%s:%d", cfg.UnAuthorizedHTTPListenAddr, 0)
+	listenAddr := fmt.Sprintf("%s:%d", cfg.UnAuthorizedHTTPListenAddr, cfg.UnAuthorizedHTTPListenPort)
 	unauthHttpListener, err := net.Listen(DefaultNetwork, listenAddr)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: replace this with a log statement
-	fmt.Println("Using port for /metrics, /pprof and /ready endpoints:", unauthHttpListener.Addr().(*net.TCPAddr).Port)
 
 	var router *http.ServeMux
 	if cfg.UnAuthorizedHTTPRouter != nil {
