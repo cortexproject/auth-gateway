@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"time"
 
 	"github.com/cortexproject/auth-gateway/middleware"
@@ -144,7 +145,7 @@ func New(cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	registerMetrics(unAuthServer, reg)
+	registerEndpoints(unAuthServer, reg)
 
 	httpMiddleware := append(prometheusMiddleware, cfg.HTTPMiddleware...)
 	authServer, err := initAuthServer(&cfg, httpMiddleware)
@@ -208,8 +209,9 @@ func (s *server) shutdown(gracefulShutdownTimeout time.Duration) {
 	s.httpServer.Shutdown(ctx)
 }
 
-func registerMetrics(srv *server, reg *prometheus.Registry) {
+func registerEndpoints(srv *server, reg *prometheus.Registry) {
 	srv.http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	srv.http.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 }
 
 func (s *Server) GetHTTPHandlers() (http.Handler, http.Handler) {
