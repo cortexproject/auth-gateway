@@ -207,7 +207,14 @@ func (s *server) shutdown(gracefulShutdownTimeout time.Duration) {
 
 func registerEndpoints(srv *server, reg *prometheus.Registry) {
 	srv.http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	srv.http.Handle("/ready", http.HandlerFunc(readyHandler))
 	srv.http.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+}
+
+func readyHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("Ready!"))
+
 }
 
 func (s *Server) GetHTTPHandlers() (http.Handler, http.Handler) {
