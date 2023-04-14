@@ -52,6 +52,12 @@ func TestStartGateway(t *testing.T) {
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
+	timeouts := Timeouts{
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  5 * time.Second,
+	}
+
 	testCases := []struct {
 		name           string
 		authHeader     string
@@ -76,8 +82,9 @@ func TestStartGateway(t *testing.T) {
 					Paths    []string `yaml:"paths"`
 					Timeouts Timeouts `yaml:"timeouts"`
 				}{
-					URL:   distributorServer.URL,
-					Paths: nil,
+					URL:      distributorServer.URL,
+					Paths:    nil,
+					Timeouts: timeouts,
 				},
 				QueryFrontend: struct {
 					URL   string   `yaml:"url"`
@@ -132,6 +139,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{
 						"/test/distributor",
 					},
+					Timeouts: timeouts,
 				},
 				QueryFrontend: struct {
 					URL   string   `yaml:"url"`
