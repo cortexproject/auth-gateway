@@ -5,65 +5,155 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"time"
+
+	"github.com/cortexproject/auth-gateway/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const DefaultNetwork = "tcp"
+const (
+	AUTH           = "auth"
+	UNAUTH         = "unauth"
+	DefaultNetwork = "tcp"
+)
 
 type Config struct {
-	HTTPListenNetwork string
-	HTTPListenAddr    string
-	HTTPListenPort    int
+	HTTPRouter     *http.ServeMux
+	HTTPListenPort int
+	HTTPListenAddr string
+	HTTPMiddleware []middleware.Interface
+
+	UnAuthorizedHTTPRouter     *http.ServeMux
+	UnAuthorizedHTTPListenAddr string
+	UnAuthorizedHTTPListenPort int
+	UnAuthorizedHTTPMiddleware []middleware.Interface
 
 	ServerGracefulShutdownTimeout time.Duration
 	HTTPServerReadTimeout         time.Duration
 	HTTPServerWriteTimeout        time.Duration
 	HTTPServerIdleTimeout         time.Duration
-
-	Router *http.ServeMux
 }
 
 type Server struct {
-	cfg Config
-
-	HTTP         *http.ServeMux
-	HTTPServer   *http.Server
-	HTTPListener net.Listener
+	cfg           Config
+	promRegistery *prometheus.Registry
+	authServer    *server
+	unAuthServer  *server
 }
 
-func New(cfg Config) (*Server, error) {
-	network := cfg.HTTPListenNetwork
-	if network == "" {
-		network = DefaultNetwork
-	}
+type server struct {
+	http         *http.ServeMux
+	httpServer   *http.Server
+	httpListener net.Listener
+}
+
+func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, error) {
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTPListenAddr, cfg.HTTPListenPort)
-	httpListener, err := net.Listen(network, listenAddr)
+	httpListener, err := net.Listen(DefaultNetwork, listenAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	var router *http.ServeMux
-	if cfg.Router != nil {
-		router = cfg.Router
+	if cfg.HTTPRouter != nil {
+		router = cfg.HTTPRouter
 	} else {
 		router = http.NewServeMux()
 	}
 
+	httpMiddleware := append(middlewares, cfg.HTTPMiddleware...)
 	httpServer := &http.Server{
 		Addr:    listenAddr,
-		Handler: router,
+		Handler: middleware.Merge(httpMiddleware...).Wrap(router),
 
 		ReadTimeout:  cfg.HTTPServerReadTimeout,
 		WriteTimeout: cfg.HTTPServerWriteTimeout,
 		IdleTimeout:  cfg.HTTPServerIdleTimeout,
 	}
 
-	return &Server{
-		cfg:          cfg,
-		HTTPListener: httpListener,
+	return &server{
+		http:         router,
+		httpServer:   httpServer,
+		httpListener: httpListener,
+	}, nil
+}
 
-		HTTP:       router,
-		HTTPServer: httpServer,
+func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, error) {
+	listenAddr := fmt.Sprintf("%s:%d", cfg.UnAuthorizedHTTPListenAddr, cfg.UnAuthorizedHTTPListenPort)
+	unauthHttpListener, err := net.Listen(DefaultNetwork, listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	var router *http.ServeMux
+	if cfg.UnAuthorizedHTTPRouter != nil {
+		router = cfg.UnAuthorizedHTTPRouter
+	} else {
+		router = http.NewServeMux()
+	}
+	unauthHttpServer := &http.Server{
+		Addr:         listenAddr,
+		Handler:      middleware.Merge(middlewares...).Wrap(router),
+		ReadTimeout:  cfg.HTTPServerReadTimeout,
+		WriteTimeout: cfg.HTTPServerWriteTimeout,
+		IdleTimeout:  cfg.HTTPServerIdleTimeout,
+	}
+
+	return &server{
+		http:         router,
+		httpServer:   unauthHttpServer,
+		httpListener: unauthHttpListener,
+	}, nil
+}
+
+func (s *Server) RegisterTo(pattern string, handler http.Handler, where string) {
+	switch where {
+	case AUTH:
+		s.authServer.http.Handle(pattern, handler)
+	case UNAUTH:
+		s.unAuthServer.http.Handle(pattern, handler)
+	default:
+		// TODO: replace this with a logger or something else
+		fmt.Println("unknown")
+	}
+}
+
+func New(cfg Config) (*Server, error) {
+	reg := prometheus.NewRegistry()
+	requestDuration := promauto.With(reg).NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "cortex",
+			Name:      "request_duration_seconds",
+			Help:      "Time (in seconds) spent serving HTTP requests.",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+		}, []string{"method", "route", "status_code", "ws"},
+	)
+
+	prometheusMiddleware := []middleware.Interface{
+		middleware.Instrument{
+			Duration: requestDuration,
+		},
+	}
+	unAuthServer, err := initUnAuthServer(&cfg, append(prometheusMiddleware, cfg.UnAuthorizedHTTPMiddleware...))
+	if err != nil {
+		return nil, err
+	}
+	registerEndpoints(unAuthServer, reg)
+
+	httpMiddleware := append(prometheusMiddleware, cfg.HTTPMiddleware...)
+	authServer, err := initAuthServer(&cfg, httpMiddleware)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{
+		cfg:           cfg,
+		promRegistery: reg,
+		authServer:    authServer,
+		unAuthServer:  unAuthServer,
 	}, nil
 }
 
@@ -72,7 +162,19 @@ func (s *Server) Run() error {
 	errChan := make(chan error, 1)
 
 	go func() {
-		err := s.HTTPServer.Serve(s.HTTPListener)
+		err := s.authServer.run()
+		if err == http.ErrServerClosed {
+			err = nil
+		}
+
+		select {
+		case errChan <- err:
+		default:
+		}
+	}()
+
+	go func() {
+		err := s.unAuthServer.run()
 		if err == http.ErrServerClosed {
 			err = nil
 		}
@@ -86,9 +188,35 @@ func (s *Server) Run() error {
 	return <-errChan
 }
 
+func (s *server) run() error {
+	return s.httpServer.Serve(s.httpListener)
+}
+
 func (s *Server) Shutdown() {
-	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.ServerGracefulShutdownTimeout)
+	s.authServer.shutdown(s.cfg.ServerGracefulShutdownTimeout)
+	s.unAuthServer.shutdown(s.cfg.ServerGracefulShutdownTimeout)
+}
+
+func (s *server) shutdown(gracefulShutdownTimeout time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
 	defer cancel()
 
-	s.HTTPServer.Shutdown(ctx)
+	s.httpListener.Close()
+	s.httpServer.Shutdown(ctx)
+}
+
+func registerEndpoints(srv *server, reg *prometheus.Registry) {
+	srv.http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	srv.http.Handle("/ready", http.HandlerFunc(readyHandler))
+	srv.http.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+}
+
+func readyHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("Ready!"))
+
+}
+
+func (s *Server) GetHTTPHandlers() (http.Handler, http.Handler) {
+	return s.authServer.http, s.unAuthServer.http
 }

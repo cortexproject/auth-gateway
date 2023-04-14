@@ -3,15 +3,29 @@ package gateway
 import (
 	"net/http"
 
+	"github.com/cortexproject/auth-gateway/middleware"
 	"github.com/go-kit/log/level"
 )
 
-func (conf *Config) Authenticate(h http.Handler) http.Handler {
+type Authentication struct {
+	config *Config
+}
+
+func NewAuthentication(config *Config) *Authentication {
+	return &Authentication{
+		config: config,
+	}
+}
+
+func (a Authentication) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sr := &middleware.StatusRecorder{
+			ResponseWriter: w,
+		}
 		ok := false
-		for _, tenant := range conf.Tenants {
+		for _, tenant := range a.config.Tenants {
 			if tenant.Authentication == "basic" {
-				ok = tenant.basicAuth(w, r)
+				ok = tenant.basicAuth(sr, r)
 				if ok {
 					break
 				}
@@ -19,26 +33,25 @@ func (conf *Config) Authenticate(h http.Handler) http.Handler {
 			// add other authentication methods if necessary
 		}
 
-		if !ok {
+		if ok {
+			next.ServeHTTP(sr, r)
+		} else {
 			level.Debug(logger).Log("msg", "No valid tenant credentials are found")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+			sr.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			sr.WriteHeader(http.StatusUnauthorized)
 		}
 
-		h.ServeHTTP(w, r)
+		w.WriteHeader(sr.Status)
 	})
 }
 
 func (tenant *Tenant) basicAuth(w http.ResponseWriter, r *http.Request) bool {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
 	username, password, ok := r.BasicAuth()
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
 
@@ -47,8 +60,6 @@ func (tenant *Tenant) basicAuth(w http.ResponseWriter, r *http.Request) bool {
 			r.Header.Set("X-Scope-OrgID", tenant.ID)
 			return true
 		} else {
-			level.Debug(logger).Log("msg", "Wrong password for ", tenant.Username)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return false
 		}
 	}
