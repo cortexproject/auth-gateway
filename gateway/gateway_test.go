@@ -22,8 +22,9 @@ func TestNewGateway(t *testing.T) {
 
 	config := Config{
 		Distributor: struct {
-			URL   string   `yaml:"url"`
-			Paths []string `yaml:"paths"`
+			URL      string   `yaml:"url"`
+			Paths    []string `yaml:"paths"`
+			Timeouts Timeouts `yaml:"timeouts"`
 		}{
 			URL:   "http://localhost:8000",
 			Paths: nil,
@@ -71,8 +72,9 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL      string   `yaml:"url"`
+					Paths    []string `yaml:"paths"`
+					Timeouts Timeouts `yaml:"timeouts"`
 				}{
 					URL:   distributorServer.URL,
 					Paths: nil,
@@ -122,8 +124,9 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL      string   `yaml:"url"`
+					Paths    []string `yaml:"paths"`
+					Timeouts Timeouts `yaml:"timeouts"`
 				}{
 					URL: distributorServer.URL,
 					Paths: []string{
@@ -151,8 +154,9 @@ func TestStartGateway(t *testing.T) {
 			name: "not found route",
 			config: &Config{
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL      string   `yaml:"url"`
+					Paths    []string `yaml:"paths"`
+					Timeouts Timeouts `yaml:"timeouts"`
 				}{
 					URL: distributorServer.URL,
 					Paths: []string{
@@ -183,8 +187,9 @@ func TestStartGateway(t *testing.T) {
 			name: "invalid frontend proxy",
 			config: &Config{
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL      string   `yaml:"url"`
+					Paths    []string `yaml:"paths"`
+					Timeouts Timeouts `yaml:"timeouts"`
 				}{
 					URL:   distributorServer.URL,
 					Paths: []string{},

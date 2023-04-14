@@ -31,8 +31,9 @@ func TestInit(t *testing.T) {
 					},
 				},
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL      string   `yaml:"url"`
+					Paths    []string `yaml:"paths"`
+					Timeouts Timeouts `yaml:"timeouts"`
 				}{
 					URL: "http://localhost:8081",
 					Paths: []string{
