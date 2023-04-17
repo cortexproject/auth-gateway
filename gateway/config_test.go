@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestInit(t *testing.T) {
@@ -31,9 +32,11 @@ func TestInit(t *testing.T) {
 					},
 				},
 				Distributor: struct {
-					URL      string   `yaml:"url"`
-					Paths    []string `yaml:"paths"`
-					Timeouts Timeouts `yaml:"timeouts"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: "http://localhost:8081",
 					Paths: []string{

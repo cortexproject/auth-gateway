@@ -11,9 +11,11 @@ type Config struct {
 	Server      Server   `yaml:"server"`
 	Tenants     []Tenant `yaml:"tenants"`
 	Distributor struct {
-		URL      string   `yaml:"url"`
-		Paths    []string `yaml:"paths"`
-		Timeouts Timeouts `yaml:"timeouts"`
+		URL          string        `yaml:"url"`
+		Paths        []string      `yaml:"paths"`
+		ReadTimeout  time.Duration `yaml:"read_timeout"`
+		WriteTimeout time.Duration `yaml:"write_timeout"`
+		IdleTimeout  time.Duration `yaml:"idle_timeout"`
 	} `yaml:"distributor"`
 	QueryFrontend struct {
 		URL   string   `yaml:"url"`
@@ -34,9 +36,9 @@ type Tenant struct {
 }
 
 type Timeouts struct {
-	ReadTimeout  time.Duration `yaml:"read_timeout"`
-	WriteTimeout time.Duration `yaml:"write_timeout"`
-	IdleTimeout  time.Duration `yaml:"idle_timeout"`
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
 }
 
 func Init(filePath string) (Config, error) {

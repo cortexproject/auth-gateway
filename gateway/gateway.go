@@ -39,7 +39,12 @@ var defaultQueryFrontendAPIs = []string{
 }
 
 func New(config *Config, srv *server.Server) (*Gateway, error) {
-	distributor, err := NewProxy(config.Distributor.URL, config.Distributor.Timeouts, DISTRIBUTOR)
+	distributorTimeouts := Timeouts{
+		ReadTimeout:  config.Distributor.ReadTimeout,
+		WriteTimeout: config.Distributor.WriteTimeout,
+		IdleTimeout:  config.Distributor.IdleTimeout,
+	}
+	distributor, err := NewProxy(config.Distributor.URL, distributorTimeouts, DISTRIBUTOR)
 	if err != nil {
 		return nil, err
 	}
