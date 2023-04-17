@@ -49,7 +49,12 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 		return nil, err
 	}
 
-	frontend, err := NewProxy(config.QueryFrontend.URL, Timeouts{}, "")
+	frontendTimeouts := Timeouts{
+		ReadTimeout:  config.QueryFrontend.ReadTimeout,
+		WriteTimeout: config.QueryFrontend.WriteTimeout,
+		IdleTimeout:  config.QueryFrontend.IdleTimeout,
+	}
+	frontend, err := NewProxy(config.QueryFrontend.URL, frontendTimeouts, FRONTEND)
 	if err != nil {
 		return nil, err
 	}

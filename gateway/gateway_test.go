@@ -32,8 +32,11 @@ func TestNewGateway(t *testing.T) {
 			Paths: nil,
 		},
 		QueryFrontend: struct {
-			URL   string   `yaml:"url"`
-			Paths []string `yaml:"paths"`
+			URL          string        `yaml:"url"`
+			Paths        []string      `yaml:"paths"`
+			ReadTimeout  time.Duration `yaml:"read_timeout"`
+			WriteTimeout time.Duration `yaml:"write_timeout"`
+			IdleTimeout  time.Duration `yaml:"idle_timeout"`
 		}{
 			URL:   "http://localhost:9000",
 			Paths: nil,
@@ -93,11 +96,17 @@ func TestStartGateway(t *testing.T) {
 					IdleTimeout:  timeouts.IdleTimeout,
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
-					URL:   frontendServer.URL,
-					Paths: nil,
+					URL:          frontendServer.URL,
+					Paths:        nil,
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
@@ -152,13 +161,19 @@ func TestStartGateway(t *testing.T) {
 					IdleTimeout:  timeouts.IdleTimeout,
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 			},
 			paths: []string{
@@ -184,13 +199,19 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 			},
 			paths: []string{

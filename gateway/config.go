@@ -18,8 +18,11 @@ type Config struct {
 		IdleTimeout  time.Duration `yaml:"idle_timeout"`
 	} `yaml:"distributor"`
 	QueryFrontend struct {
-		URL   string   `yaml:"url"`
-		Paths []string `yaml:"paths"`
+		URL          string        `yaml:"url"`
+		Paths        []string      `yaml:"paths"`
+		ReadTimeout  time.Duration `yaml:"read_timeout"`
+		WriteTimeout time.Duration `yaml:"write_timeout"`
+		IdleTimeout  time.Duration `yaml:"idle_timeout"`
 	} `yaml:"frontend"`
 }
 

@@ -45,8 +45,11 @@ func TestInit(t *testing.T) {
 					},
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: "http://localhost:8082",
 					Paths: []string{

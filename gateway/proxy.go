@@ -5,17 +5,24 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 const (
 	DISTRIBUTOR = "distributor"
+	FRONTEND    = "frontend"
 )
 
 var defaultTimeoutValues map[string]Timeouts = map[string]Timeouts{
 	DISTRIBUTOR: {
-		ReadTimeout:  5,
-		WriteTimeout: 5,
-		IdleTimeout:  5,
+		ReadTimeout:  time.Second * 5,
+		WriteTimeout: time.Second * 5,
+		IdleTimeout:  time.Second * 5,
+	},
+	FRONTEND: {
+		ReadTimeout:  time.Second * 5,
+		WriteTimeout: time.Second * 5,
+		IdleTimeout:  time.Second * 5,
 	},
 }
 
