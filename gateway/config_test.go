@@ -18,9 +18,13 @@ func TestInit(t *testing.T) {
 			name:     "Valid input file",
 			filePath: "testdata/valid.yaml",
 			configFile: Config{
-				Server: Server{
+				Server: NetworkAddress{
 					Address: "localhost",
 					Port:    8080,
+				},
+				Admin: NetworkAddress{
+					Address: "localhost",
+					Port:    8081,
 				},
 				Tenants: []Tenant{
 					{

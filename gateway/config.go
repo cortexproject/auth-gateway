@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Server      Server   `yaml:"server"`
-	Tenants     []Tenant `yaml:"tenants"`
+	Server      NetworkAddress `yaml:"server"`
+	Admin       NetworkAddress `yaml:"admin"`
+	Tenants     []Tenant       `yaml:"tenants"`
 	Distributor struct {
 		URL   string   `yaml:"url"`
 		Paths []string `yaml:"paths"`
@@ -19,7 +20,7 @@ type Config struct {
 	} `yaml:"frontend"`
 }
 
-type Server struct {
+type NetworkAddress struct {
 	Address string `yaml:"address"`
 	Port    int    `yaml:"port"`
 }
