@@ -38,10 +38,8 @@ func (a Authentication) Wrap(next http.Handler) http.Handler {
 		} else {
 			level.Debug(logger).Log("msg", "No valid tenant credentials are found")
 			sr.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-			sr.WriteHeader(http.StatusUnauthorized)
+			http.Error(sr, "Unauthorized", http.StatusUnauthorized)
 		}
-
-		w.WriteHeader(sr.Status)
 	})
 }
 
