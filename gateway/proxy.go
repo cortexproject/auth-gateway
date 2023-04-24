@@ -73,11 +73,12 @@ func customTransport(component string, timeouts Upstream) *http.Transport {
 		idleTimeout = defaultTimeoutValues[component].IdleTimeout
 	}
 
-	return &http.Transport{
-		ResponseHeaderTimeout: readTimeout,
-		ExpectContinueTimeout: writeTimeout,
-		IdleConnTimeout:       idleTimeout,
-	}
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.ResponseHeaderTimeout = readTimeout
+	t.ExpectContinueTimeout = writeTimeout
+	t.IdleConnTimeout = idleTimeout
+
+	return t
 }
 
 func (p *Proxy) Handler(w http.ResponseWriter, r *http.Request) {
