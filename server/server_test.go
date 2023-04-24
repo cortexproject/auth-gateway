@@ -224,3 +224,58 @@ func TestRun(t *testing.T) {
 		})
 	}
 }
+
+func TestReadyHandler(t *testing.T) {
+	cfg := Config{
+		HTTPServerReadTimeout:         5 * time.Second,
+		HTTPServerWriteTimeout:        5 * time.Second,
+		HTTPServerIdleTimeout:         5 * time.Second,
+		ServerGracefulShutdownTimeout: 5 * time.Second,
+	}
+
+	s, err := New(cfg)
+	if err != nil {
+		t.Fatalf("Failed to create a new server: %v", err)
+	}
+
+	tests := []struct {
+		name           string
+		readyState     bool
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "Not ready",
+			readyState:     false,
+			expectedStatus: http.StatusServiceUnavailable,
+			expectedBody:   "Not ready!",
+		},
+		{
+			name:           "Ready",
+			readyState:     true,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "Ready!",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s.ready = test.readyState
+			req, err := http.NewRequest("GET", "/ready", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(s.readyHandler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedStatus)
+			}
+
+			if rr.Body.String() != test.expectedBody {
+				t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), test.expectedBody)
+			}
+		})
+	}
+}
