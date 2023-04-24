@@ -27,7 +27,8 @@ func main() {
 		HTTPMiddleware: []middleware.Interface{
 			gateway.NewAuthentication(&conf),
 		},
-		UnAuthorizedHTTPListenPort: 6666,
+		UnAuthorizedHTTPListenAddr: conf.Admin.Address,
+		UnAuthorizedHTTPListenPort: conf.Admin.Port,
 	}
 	server, err := server.New(serverConf)
 	gateway.CheckErr("initializing the server", err)
