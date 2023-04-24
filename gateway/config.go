@@ -22,7 +22,7 @@ type Upstream struct {
 	IdleTimeout  time.Duration `yaml:"idle_timeout"`
 }
 
-type ServerConfig struct {
+type Server struct {
 	Address string `yaml:"address"`
 	Port    int    `yaml:"port"`
 }

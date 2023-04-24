@@ -1,9 +1,6 @@
 server:
   address: localhost
   port: 8080
-admin:
-  address: localhost
-  port: 8081
 tenants:
   - authentication: basic
     username: user1

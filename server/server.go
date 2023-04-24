@@ -42,7 +42,6 @@ type Server struct {
 	promRegistery *prometheus.Registry
 	authServer    *server
 	unAuthServer  *server
-	ready         bool
 }
 
 type server struct {
@@ -142,6 +141,7 @@ func New(cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	registerEndpoints(unAuthServer, reg)
 
 	httpMiddleware := append(prometheusMiddleware, cfg.HTTPMiddleware...)
 	authServer, err := initAuthServer(&cfg, httpMiddleware)
@@ -149,17 +149,12 @@ func New(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{
+	return &Server{
 		cfg:           cfg,
 		promRegistery: reg,
 		authServer:    authServer,
 		unAuthServer:  unAuthServer,
-		ready:         false,
-	}
-
-	registerEndpoints(unAuthServer, reg, s)
-
-	return s, nil
+	}, nil
 }
 
 func (s *Server) Run() error {
@@ -190,8 +185,6 @@ func (s *Server) Run() error {
 		}
 	}()
 
-	s.ready = true
-
 	return <-errChan
 }
 
@@ -200,7 +193,6 @@ func (s *server) run() error {
 }
 
 func (s *Server) Shutdown() {
-	s.ready = false
 	s.authServer.shutdown(s.cfg.ServerGracefulShutdownTimeout)
 	s.unAuthServer.shutdown(s.cfg.ServerGracefulShutdownTimeout)
 }
@@ -213,20 +205,15 @@ func (s *server) shutdown(gracefulShutdownTimeout time.Duration) {
 	s.httpServer.Shutdown(ctx)
 }
 
-func registerEndpoints(srv *server, reg *prometheus.Registry, serverInstance *Server) {
+func registerEndpoints(srv *server, reg *prometheus.Registry) {
 	srv.http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	srv.http.Handle("/ready", http.HandlerFunc(serverInstance.readyHandler))
+	srv.http.Handle("/ready", http.HandlerFunc(readyHandler))
 	srv.http.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 }
 
-func (s *Server) readyHandler(w http.ResponseWriter, r *http.Request) {
-	if s.ready {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Ready!"))
-	} else {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("Not ready!"))
-	}
+func readyHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("Ready!"))
 
 }
 
