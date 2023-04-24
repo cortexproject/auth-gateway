@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestInit(t *testing.T) {
@@ -31,26 +30,14 @@ func TestInit(t *testing.T) {
 						ID:             "1",
 					},
 				},
-				Distributor: struct {
-					URL          string        `yaml:"url"`
-					Paths        []string      `yaml:"paths"`
-					ReadTimeout  time.Duration `yaml:"read_timeout"`
-					WriteTimeout time.Duration `yaml:"write_timeout"`
-					IdleTimeout  time.Duration `yaml:"idle_timeout"`
-				}{
+				Distributor: Upstream{
 					URL: "http://localhost:8081",
 					Paths: []string{
 						"/api/v1",
 						"/api/v1/push",
 					},
 				},
-				QueryFrontend: struct {
-					URL          string        `yaml:"url"`
-					Paths        []string      `yaml:"paths"`
-					ReadTimeout  time.Duration `yaml:"read_timeout"`
-					WriteTimeout time.Duration `yaml:"write_timeout"`
-					IdleTimeout  time.Duration `yaml:"idle_timeout"`
-				}{
+				QueryFrontend: Upstream{
 					URL: "http://localhost:8082",
 					Paths: []string{
 						"/api/prom/api/v1/query",

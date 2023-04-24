@@ -13,7 +13,7 @@ const (
 	FRONTEND    = "frontend"
 )
 
-var defaultTimeoutValues map[string]Timeouts = map[string]Timeouts{
+var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 	DISTRIBUTOR: {
 		ReadTimeout:  time.Second * 5,
 		WriteTimeout: time.Second * 5,
@@ -32,7 +32,7 @@ type Proxy struct {
 	reverseProxy *httputil.ReverseProxy
 }
 
-func NewProxy(targetURL string, timeouts Timeouts, component string) (*Proxy, error) {
+func NewProxy(targetURL string, timeouts Upstream, component string) (*Proxy, error) {
 	url, err := url.Parse(targetURL)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 	}
 }
 
-func customTransport(component string, timeouts Timeouts) *http.Transport {
+func customTransport(component string, timeouts Upstream) *http.Transport {
 	readTimeout := timeouts.ReadTimeout
 	if readTimeout == 0 {
 		readTimeout = defaultTimeoutValues[component].ReadTimeout
