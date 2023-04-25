@@ -1,6 +1,9 @@
 server:
   address: localhost
   port: 8080
+admin:
+  address: localhost
+  port: 8081
 tenants:
   - authentication: basic
     username: username1
@@ -11,12 +14,12 @@ tenants:
     password: password2
     id: "orgid"
 distributor:
-  url: http://127.0.0.1:8081
+  url: http://127.0.0.1:9009
   paths: 
   - /api/v1/push
   - /api/prom/push
 frontend:
-  url: http://127.0.0.1:8081
+  url: http://127.0.0.1:9010
   paths:
   - /api/prom/api/v1/labels
   - /prometheus/api/v1/label/
