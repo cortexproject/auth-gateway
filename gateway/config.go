@@ -16,11 +16,11 @@ type Config struct {
 }
 
 type Upstream struct {
-	URL          string        `yaml:"url"`
-	Paths        []string      `yaml:"paths"`
-	ReadTimeout  time.Duration `yaml:"read_timeout"`
-	WriteTimeout time.Duration `yaml:"write_timeout"`
-	IdleTimeout  time.Duration `yaml:"idle_timeout"`
+	URL                             string        `yaml:"url"`
+	Paths                           []string      `yaml:"paths"`
+	HTTPClientDialerTimeout         time.Duration `yaml:"http_client_dialer_timeout"`
+	HTTPClientTLSHandshakeTimeout   time.Duration `yaml:"http_client_tls_handshake_timeout"`
+	HTTPClientResponseHeaderTimeout time.Duration `yaml:"http_client_response_header_timeout"`
 }
 
 type ServerConfig struct {

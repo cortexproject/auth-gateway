@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -15,14 +16,14 @@ const (
 
 var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 	DISTRIBUTOR: {
-		ReadTimeout:  time.Second * 5,
-		WriteTimeout: time.Second * 5,
-		IdleTimeout:  time.Second * 5,
+		HTTPClientDialerTimeout:         time.Second * 5,
+		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
+		HTTPClientResponseHeaderTimeout: time.Second * 5,
 	},
 	FRONTEND: {
-		ReadTimeout:  time.Second * 5,
-		WriteTimeout: time.Second * 5,
-		IdleTimeout:  time.Second * 5,
+		HTTPClientDialerTimeout:         time.Second * 5,
+		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
+		HTTPClientResponseHeaderTimeout: time.Second * 5,
 	},
 }
 
@@ -60,23 +61,26 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 }
 
 func customTransport(component string, timeouts Upstream) *http.Transport {
-	readTimeout := timeouts.ReadTimeout
-	if readTimeout == 0 {
-		readTimeout = defaultTimeoutValues[component].ReadTimeout
+	dialerTimeout := timeouts.HTTPClientDialerTimeout
+	if dialerTimeout == 0 {
+		dialerTimeout = defaultTimeoutValues[component].HTTPClientDialerTimeout
 	}
-	writeTimeout := timeouts.WriteTimeout
-	if writeTimeout == 0 {
-		writeTimeout = defaultTimeoutValues[component].WriteTimeout
+	TLSHandshakeTimeout := timeouts.HTTPClientTLSHandshakeTimeout
+	if TLSHandshakeTimeout == 0 {
+		TLSHandshakeTimeout = defaultTimeoutValues[component].HTTPClientTLSHandshakeTimeout
 	}
-	idleTimeout := timeouts.IdleTimeout
-	if idleTimeout == 0 {
-		idleTimeout = defaultTimeoutValues[component].IdleTimeout
+	responseHeaderTimeout := timeouts.HTTPClientResponseHeaderTimeout
+	if responseHeaderTimeout == 0 {
+		responseHeaderTimeout = defaultTimeoutValues[component].HTTPClientResponseHeaderTimeout
 	}
 
 	t := http.DefaultTransport.(*http.Transport).Clone()
-	t.ResponseHeaderTimeout = readTimeout
-	t.ExpectContinueTimeout = writeTimeout
-	t.IdleConnTimeout = idleTimeout
+	d := &net.Dialer{
+		Timeout: dialerTimeout,
+	}
+	t.DialContext = d.DialContext
+	t.TLSHandshakeTimeout = TLSHandshakeTimeout
+	t.ResponseHeaderTimeout = responseHeaderTimeout
 
 	return t
 }

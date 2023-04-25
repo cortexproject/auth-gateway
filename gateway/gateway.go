@@ -40,9 +40,9 @@ var defaultQueryFrontendAPIs = []string{
 
 func New(config *Config, srv *server.Server) (*Gateway, error) {
 	distributorTimeouts := Upstream{
-		ReadTimeout:  config.Distributor.ReadTimeout,
-		WriteTimeout: config.Distributor.WriteTimeout,
-		IdleTimeout:  config.Distributor.IdleTimeout,
+		HTTPClientDialerTimeout:         config.Distributor.HTTPClientDialerTimeout,
+		HTTPClientTLSHandshakeTimeout:   config.Distributor.HTTPClientTLSHandshakeTimeout,
+		HTTPClientResponseHeaderTimeout: config.Distributor.HTTPClientResponseHeaderTimeout,
 	}
 	distributor, err := NewProxy(config.Distributor.URL, distributorTimeouts, DISTRIBUTOR)
 	if err != nil {
@@ -50,9 +50,9 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 	}
 
 	frontendTimeouts := Upstream{
-		ReadTimeout:  config.QueryFrontend.ReadTimeout,
-		WriteTimeout: config.QueryFrontend.WriteTimeout,
-		IdleTimeout:  config.QueryFrontend.IdleTimeout,
+		HTTPClientDialerTimeout:         config.QueryFrontend.HTTPClientDialerTimeout,
+		HTTPClientTLSHandshakeTimeout:   config.QueryFrontend.HTTPClientTLSHandshakeTimeout,
+		HTTPClientResponseHeaderTimeout: config.QueryFrontend.HTTPClientResponseHeaderTimeout,
 	}
 	frontend, err := NewProxy(config.QueryFrontend.URL, frontendTimeouts, FRONTEND)
 	if err != nil {
