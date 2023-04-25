@@ -70,15 +70,15 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 
 	// These default values are the same as Cortex's server_config
 	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
-	readTimeout := cfg.HTTPServerReadTimeout
+	readTimeout := cfg.HTTPServerReadTimeout * time.Second
 	if readTimeout == 0 {
 		readTimeout = 30 * time.Second
 	}
-	writeTimeout := cfg.HTTPServerWriteTimeout
+	writeTimeout := cfg.HTTPServerWriteTimeout * time.Second
 	if writeTimeout == 0 {
 		writeTimeout = 30 * time.Second
 	}
-	idleTimeout := cfg.HTTPServerIdleTimeout
+	idleTimeout := cfg.HTTPServerIdleTimeout * time.Second
 	if idleTimeout == 0 {
 		idleTimeout = 120 * time.Second
 	}
@@ -115,15 +115,15 @@ func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server,
 
 	// These default values are the same as Cortex's server_config
 	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
-	readTimeout := cfg.UnAuthorizedHTTPServerReadTimeout
+	readTimeout := cfg.UnAuthorizedHTTPServerReadTimeout * time.Second
 	if readTimeout == 0 {
 		readTimeout = 30 * time.Second
 	}
-	writeTimeout := cfg.UnAuthorizedHTTPServerWriteTimeout
+	writeTimeout := cfg.UnAuthorizedHTTPServerWriteTimeout * time.Second
 	if writeTimeout == 0 {
 		writeTimeout = 30 * time.Second
 	}
-	idleTimeout := cfg.UnAuthorizedHTTPServerIdleTimeout
+	idleTimeout := cfg.UnAuthorizedHTTPServerIdleTimeout * time.Second
 	if idleTimeout == 0 {
 		idleTimeout = 120 * time.Second
 	}
