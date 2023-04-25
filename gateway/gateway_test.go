@@ -46,9 +46,9 @@ func TestStartGateway(t *testing.T) {
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	timeouts := Upstream{
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  5 * time.Second,
+		HTTPClientDialerTimeout:         10 * time.Second,
+		HTTPClientTLSHandshakeTimeout:   5 * time.Second,
+		HTTPClientResponseHeaderTimeout: 5 * time.Second,
 	}
 
 	testCases := []struct {
@@ -71,18 +71,18 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				Distributor: Upstream{
-					URL:          distributorServer.URL,
-					Paths:        nil,
-					ReadTimeout:  timeouts.ReadTimeout,
-					WriteTimeout: timeouts.WriteTimeout,
-					IdleTimeout:  timeouts.IdleTimeout,
+					URL:                             distributorServer.URL,
+					Paths:                           nil,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 				},
 				QueryFrontend: Upstream{
-					URL:          frontendServer.URL,
-					Paths:        nil,
-					ReadTimeout:  timeouts.ReadTimeout,
-					WriteTimeout: timeouts.WriteTimeout,
-					IdleTimeout:  timeouts.IdleTimeout,
+					URL:                             frontendServer.URL,
+					Paths:                           nil,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
@@ -126,18 +126,18 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{
 						"/test/distributor",
 					},
-					ReadTimeout:  timeouts.ReadTimeout,
-					WriteTimeout: timeouts.WriteTimeout,
-					IdleTimeout:  timeouts.IdleTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 				},
 				QueryFrontend: Upstream{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
-					ReadTimeout:  timeouts.ReadTimeout,
-					WriteTimeout: timeouts.WriteTimeout,
-					IdleTimeout:  timeouts.IdleTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 				},
 			},
 			paths: []string{
@@ -161,9 +161,9 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{
 						"/test/frontend",
 					},
-					ReadTimeout:  timeouts.ReadTimeout,
-					WriteTimeout: timeouts.WriteTimeout,
-					IdleTimeout:  timeouts.IdleTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 				},
 			},
 			paths: []string{
