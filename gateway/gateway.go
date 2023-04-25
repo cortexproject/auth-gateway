@@ -39,7 +39,7 @@ var defaultQueryFrontendAPIs = []string{
 }
 
 func New(config *Config, srv *server.Server) (*Gateway, error) {
-	distributorTimeouts := Timeouts{
+	distributorTimeouts := Upstream{
 		ReadTimeout:  config.Distributor.ReadTimeout,
 		WriteTimeout: config.Distributor.WriteTimeout,
 		IdleTimeout:  config.Distributor.IdleTimeout,
@@ -49,7 +49,7 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 		return nil, err
 	}
 
-	frontendTimeouts := Timeouts{
+	frontendTimeouts := Upstream{
 		ReadTimeout:  config.QueryFrontend.ReadTimeout,
 		WriteTimeout: config.QueryFrontend.WriteTimeout,
 		IdleTimeout:  config.QueryFrontend.IdleTimeout,
