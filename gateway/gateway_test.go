@@ -22,15 +22,21 @@ func TestNewGateway(t *testing.T) {
 
 	config := Config{
 		Distributor: struct {
-			URL   string   `yaml:"url"`
-			Paths []string `yaml:"paths"`
+			URL          string        `yaml:"url"`
+			Paths        []string      `yaml:"paths"`
+			ReadTimeout  time.Duration `yaml:"read_timeout"`
+			WriteTimeout time.Duration `yaml:"write_timeout"`
+			IdleTimeout  time.Duration `yaml:"idle_timeout"`
 		}{
 			URL:   "http://localhost:8000",
 			Paths: nil,
 		},
 		QueryFrontend: struct {
-			URL   string   `yaml:"url"`
-			Paths []string `yaml:"paths"`
+			URL          string        `yaml:"url"`
+			Paths        []string      `yaml:"paths"`
+			ReadTimeout  time.Duration `yaml:"read_timeout"`
+			WriteTimeout time.Duration `yaml:"write_timeout"`
+			IdleTimeout  time.Duration `yaml:"idle_timeout"`
 		}{
 			URL:   "http://localhost:9000",
 			Paths: nil,
@@ -50,6 +56,12 @@ func TestStartGateway(t *testing.T) {
 
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	timeouts := Timeouts{
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  5 * time.Second,
+	}
 
 	testCases := []struct {
 		name           string
@@ -71,18 +83,30 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
-					URL:   distributorServer.URL,
-					Paths: nil,
+					URL:          distributorServer.URL,
+					Paths:        nil,
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
-					URL:   frontendServer.URL,
-					Paths: nil,
+					URL:          frontendServer.URL,
+					Paths:        nil,
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
@@ -122,22 +146,34 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: distributorServer.URL,
 					Paths: []string{
 						"/test/distributor",
 					},
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 			},
 			paths: []string{
@@ -151,8 +187,11 @@ func TestStartGateway(t *testing.T) {
 			name: "not found route",
 			config: &Config{
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: distributorServer.URL,
 					Paths: []string{
@@ -160,13 +199,19 @@ func TestStartGateway(t *testing.T) {
 					},
 				},
 				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
+					ReadTimeout:  timeouts.ReadTimeout,
+					WriteTimeout: timeouts.WriteTimeout,
+					IdleTimeout:  timeouts.IdleTimeout,
 				},
 			},
 			paths: []string{
@@ -183,8 +228,11 @@ func TestStartGateway(t *testing.T) {
 			name: "invalid frontend proxy",
 			config: &Config{
 				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
+					URL          string        `yaml:"url"`
+					Paths        []string      `yaml:"paths"`
+					ReadTimeout  time.Duration `yaml:"read_timeout"`
+					WriteTimeout time.Duration `yaml:"write_timeout"`
+					IdleTimeout  time.Duration `yaml:"idle_timeout"`
 				}{
 					URL:   distributorServer.URL,
 					Paths: []string{},

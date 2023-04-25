@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -11,12 +12,18 @@ type Config struct {
 	Admin       ServerConfig `yaml:"admin"`
 	Tenants     []Tenant     `yaml:"tenants"`
 	Distributor struct {
-		URL   string   `yaml:"url"`
-		Paths []string `yaml:"paths"`
+		URL          string        `yaml:"url"`
+		Paths        []string      `yaml:"paths"`
+		ReadTimeout  time.Duration `yaml:"read_timeout"`
+		WriteTimeout time.Duration `yaml:"write_timeout"`
+		IdleTimeout  time.Duration `yaml:"idle_timeout"`
 	} `yaml:"distributor"`
 	QueryFrontend struct {
-		URL   string   `yaml:"url"`
-		Paths []string `yaml:"paths"`
+		URL          string        `yaml:"url"`
+		Paths        []string      `yaml:"paths"`
+		ReadTimeout  time.Duration `yaml:"read_timeout"`
+		WriteTimeout time.Duration `yaml:"write_timeout"`
+		IdleTimeout  time.Duration `yaml:"idle_timeout"`
 	} `yaml:"frontend"`
 }
 
@@ -30,6 +37,12 @@ type Tenant struct {
 	Username       string `yaml:"username"`
 	Password       string `yaml:"password"`
 	ID             string `yaml:"id"`
+}
+
+type Timeouts struct {
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
 }
 
 func Init(filePath string) (Config, error) {
