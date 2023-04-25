@@ -27,8 +27,14 @@ func main() {
 		HTTPMiddleware: []middleware.Interface{
 			gateway.NewAuthentication(&conf),
 		},
-		UnAuthorizedHTTPListenAddr: conf.Admin.Address,
-		UnAuthorizedHTTPListenPort: conf.Admin.Port,
+		HTTPServerReadTimeout:              conf.Server.ReadTimeout,
+		HTTPServerWriteTimeout:             conf.Server.WriteTimeout,
+		HTTPServerIdleTimeout:              conf.Server.IdleTimeout,
+		UnAuthorizedHTTPListenAddr:         conf.Admin.Address,
+		UnAuthorizedHTTPListenPort:         conf.Admin.Port,
+		UnAuthorizedHTTPServerReadTimeout:  conf.Admin.ReadTimeout,
+		UnAuthorizedHTTPServerWriteTimeout: conf.Admin.WriteTimeout,
+		UnAuthorizedHTTPServerIdleTimeout:  conf.Admin.IdleTimeout,
 	}
 	server, err := server.New(serverConf)
 	gateway.CheckErr("initializing the server", err)
