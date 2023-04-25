@@ -61,15 +61,15 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 }
 
 func customTransport(component string, timeouts Upstream) *http.Transport {
-	dialerTimeout := timeouts.HTTPClientDialerTimeout
+	dialerTimeout := timeouts.HTTPClientDialerTimeout * time.Second
 	if dialerTimeout == 0 {
 		dialerTimeout = defaultTimeoutValues[component].HTTPClientDialerTimeout
 	}
-	TLSHandshakeTimeout := timeouts.HTTPClientTLSHandshakeTimeout
+	TLSHandshakeTimeout := timeouts.HTTPClientTLSHandshakeTimeout * time.Second
 	if TLSHandshakeTimeout == 0 {
 		TLSHandshakeTimeout = defaultTimeoutValues[component].HTTPClientTLSHandshakeTimeout
 	}
-	responseHeaderTimeout := timeouts.HTTPClientResponseHeaderTimeout
+	responseHeaderTimeout := timeouts.HTTPClientResponseHeaderTimeout * time.Second
 	if responseHeaderTimeout == 0 {
 		responseHeaderTimeout = defaultTimeoutValues[component].HTTPClientResponseHeaderTimeout
 	}
