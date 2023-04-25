@@ -1,14 +1,14 @@
 server:
   address: localhost
   port: 8080
-  read_timeout: 20
-  write_timeout: 15
-  idle_timeout: 90
+  http_server_read_timeout: 20
+  http_server_write_timeout: 15
+  http_server_idle_timeout: 90
 admin:
   address: localhost
   port: 8081
-  read_timeout: 20
-  write_timeout: 15
+  http_server_read_timeout: 20
+  http_server_write_timeout: 15
 tenants:
   - authentication: basic
     username: username1
