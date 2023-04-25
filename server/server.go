@@ -68,7 +68,20 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 		router = http.NewServeMux()
 	}
 
-	readTimeout, writeTimeout, idleTimeout := cfg.getDefaultServerTimeouts()
+	// These default values are the same as Cortex's server_config
+	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
+	readTimeout := cfg.HTTPServerReadTimeout
+	if readTimeout == 0 {
+		readTimeout = 30 * time.Second
+	}
+	writeTimeout := cfg.HTTPServerWriteTimeout
+	if writeTimeout == 0 {
+		writeTimeout = 30 * time.Second
+	}
+	idleTimeout := cfg.HTTPServerIdleTimeout
+	if idleTimeout == 0 {
+		idleTimeout = 120 * time.Second
+	}
 
 	httpMiddleware := append(middlewares, cfg.HTTPMiddleware...)
 	httpServer := &http.Server{
@@ -100,7 +113,20 @@ func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server,
 		router = http.NewServeMux()
 	}
 
-	readTimeout, writeTimeout, idleTimeout := cfg.getDefaultServerTimeouts()
+	// These default values are the same as Cortex's server_config
+	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
+	readTimeout := cfg.UnAuthorizedHTTPServerReadTimeout
+	if readTimeout == 0 {
+		readTimeout = 30 * time.Second
+	}
+	writeTimeout := cfg.UnAuthorizedHTTPServerWriteTimeout
+	if writeTimeout == 0 {
+		writeTimeout = 30 * time.Second
+	}
+	idleTimeout := cfg.UnAuthorizedHTTPServerIdleTimeout
+	if idleTimeout == 0 {
+		idleTimeout = 120 * time.Second
+	}
 
 	unauthHttpServer := &http.Server{
 		Addr:         listenAddr,
@@ -239,23 +265,4 @@ func (s *Server) readyHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) GetHTTPHandlers() (http.Handler, http.Handler) {
 	return s.authServer.http, s.unAuthServer.http
-}
-
-// These default values are the same as Cortex's server_config
-// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
-func (cfg *Config) getDefaultServerTimeouts() (time.Duration, time.Duration, time.Duration) {
-	readTimeout := cfg.HTTPServerReadTimeout
-	if readTimeout == 0 {
-		readTimeout = 30 * time.Second
-	}
-	writeTimeout := cfg.HTTPServerWriteTimeout
-	if writeTimeout == 0 {
-		writeTimeout = 30 * time.Second
-	}
-	idleTimeout := cfg.HTTPServerIdleTimeout
-	if idleTimeout == 0 {
-		idleTimeout = 120 * time.Second
-	}
-
-	return readTimeout, writeTimeout, idleTimeout
 }
