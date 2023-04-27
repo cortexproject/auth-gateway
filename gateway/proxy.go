@@ -23,7 +23,7 @@ var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
 	},
 	FRONTEND: {
-		HTTPClientTimeout:               time.Second * 15,
+		HTTPClientTimeout:               time.Minute * 1,
 		HTTPClientDialerTimeout:         time.Second * 5,
 		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
@@ -49,6 +49,10 @@ func NewProxy(targetURL string, timeouts Upstream, component string) (*Proxy, er
 	reverseProxy.Transport = customTransport(component, timeouts)
 	originalDirector := reverseProxy.Director
 	reverseProxy.Director = customDirector(url, originalDirector)
+
+	if timeouts.HTTPClientTimeout == 0 {
+		timeouts.HTTPClientTimeout = defaultTimeoutValues[component].HTTPClientTimeout
+	}
 
 	return &Proxy{
 		targetURL:    url,
