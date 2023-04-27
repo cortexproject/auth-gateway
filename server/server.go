@@ -70,17 +70,28 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 
 	// These default values are the same as Cortex's server_config
 	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
-	readTimeout := cfg.HTTPServerReadTimeout * time.Second
+	readTimeout, err := time.ParseDuration(cfg.HTTPServerReadTimeout.String())
+	if err != nil {
+		return nil, err
+	}
 	if readTimeout == 0 {
 		readTimeout = 30 * time.Second
 	}
-	writeTimeout := cfg.HTTPServerWriteTimeout * time.Second
+
+	writeTimeout, err := time.ParseDuration(cfg.HTTPServerWriteTimeout.String())
+	if err != nil {
+		return nil, err
+	}
 	if writeTimeout == 0 {
 		writeTimeout = 30 * time.Second
 	}
-	idleTimeout := cfg.HTTPServerIdleTimeout * time.Second
+
+	idleTimeout, err := time.ParseDuration(cfg.HTTPServerIdleTimeout.String())
+	if err != nil {
+		return nil, err
+	}
 	if idleTimeout == 0 {
-		idleTimeout = 120 * time.Second
+		idleTimeout = 2 * time.Minute
 	}
 
 	httpMiddleware := append(middlewares, cfg.HTTPMiddleware...)
@@ -115,17 +126,28 @@ func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server,
 
 	// These default values are the same as Cortex's server_config
 	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
-	readTimeout := cfg.UnAuthorizedHTTPServerReadTimeout * time.Second
+	readTimeout, err := time.ParseDuration(cfg.UnAuthorizedHTTPServerReadTimeout.String())
+	if err != nil {
+		return nil, err
+	}
 	if readTimeout == 0 {
 		readTimeout = 30 * time.Second
 	}
-	writeTimeout := cfg.UnAuthorizedHTTPServerWriteTimeout * time.Second
+
+	writeTimeout, err := time.ParseDuration(cfg.UnAuthorizedHTTPServerWriteTimeout.String())
+	if err != nil {
+		return nil, err
+	}
 	if writeTimeout == 0 {
 		writeTimeout = 30 * time.Second
 	}
-	idleTimeout := cfg.UnAuthorizedHTTPServerIdleTimeout * time.Second
+
+	idleTimeout, err := time.ParseDuration(cfg.UnAuthorizedHTTPServerIdleTimeout.String())
+	if err != nil {
+		return nil, err
+	}
 	if idleTimeout == 0 {
-		idleTimeout = 120 * time.Second
+		idleTimeout = 2 * time.Minute
 	}
 
 	unauthHttpServer := &http.Server{

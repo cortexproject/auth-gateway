@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/cortexproject/auth-gateway/server"
 )
@@ -38,21 +39,52 @@ var defaultQueryFrontendAPIs = []string{
 	"/api/prom/api/v1/status/buildinfo",
 }
 
+// TODO: create a helper function for error handling and parsing the duration
 func New(config *Config, srv *server.Server) (*Gateway, error) {
+	httpClientDialerTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
+	httpClientTLSHandshakeTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
+	httpClientResponseHeaderTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
 	distributorTimeouts := Upstream{
-		HTTPClientDialerTimeout:         config.Distributor.HTTPClientDialerTimeout,
-		HTTPClientTLSHandshakeTimeout:   config.Distributor.HTTPClientTLSHandshakeTimeout,
-		HTTPClientResponseHeaderTimeout: config.Distributor.HTTPClientResponseHeaderTimeout,
+		HTTPClientDialerTimeout:         httpClientDialerTimeout,
+		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
+		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
 	}
 	distributor, err := NewProxy(config.Distributor.URL, distributorTimeouts, DISTRIBUTOR)
 	if err != nil {
 		return nil, err
 	}
 
+	httpClientDialerTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientDialerTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
+	httpClientTLSHandshakeTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientDialerTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
+	httpClientResponseHeaderTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientDialerTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
 	frontendTimeouts := Upstream{
-		HTTPClientDialerTimeout:         config.QueryFrontend.HTTPClientDialerTimeout,
-		HTTPClientTLSHandshakeTimeout:   config.QueryFrontend.HTTPClientTLSHandshakeTimeout,
-		HTTPClientResponseHeaderTimeout: config.QueryFrontend.HTTPClientResponseHeaderTimeout,
+		HTTPClientDialerTimeout:         httpClientDialerTimeout,
+		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
+		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
 	}
 	frontend, err := NewProxy(config.QueryFrontend.URL, frontendTimeouts, FRONTEND)
 	if err != nil {
