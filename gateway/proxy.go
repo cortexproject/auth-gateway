@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,11 +17,13 @@ const (
 
 var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 	DISTRIBUTOR: {
+		HTTPClientTimeout:               time.Second * 15,
 		HTTPClientDialerTimeout:         time.Second * 5,
 		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
 	},
 	FRONTEND: {
+		HTTPClientTimeout:               time.Second * 15,
 		HTTPClientDialerTimeout:         time.Second * 5,
 		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
@@ -28,8 +31,8 @@ var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 }
 
 type Proxy struct {
-	targetURL *url.URL
-
+	targetURL    *url.URL
+	timeouts     Upstream
 	reverseProxy *httputil.ReverseProxy
 }
 
@@ -49,6 +52,7 @@ func NewProxy(targetURL string, timeouts Upstream, component string) (*Proxy, er
 
 	return &Proxy{
 		targetURL:    url,
+		timeouts:     timeouts,
 		reverseProxy: reverseProxy,
 	}, nil
 }
@@ -87,5 +91,10 @@ func customTransport(component string, timeouts Upstream) *http.Transport {
 
 func (p *Proxy) Handler(w http.ResponseWriter, r *http.Request) {
 	r.Header.Del("Authorization")
+
+	ctx, cancel := context.WithTimeout(r.Context(), p.timeouts.HTTPClientTimeout)
+	defer cancel()
+	r = r.WithContext(ctx)
+
 	p.reverseProxy.ServeHTTP(w, r)
 }

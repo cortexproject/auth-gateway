@@ -46,6 +46,7 @@ func TestStartGateway(t *testing.T) {
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	timeouts := Upstream{
+		HTTPClientTimeout:               20 * time.Second,
 		HTTPClientDialerTimeout:         10 * time.Second,
 		HTTPClientTLSHandshakeTimeout:   5 * time.Second,
 		HTTPClientResponseHeaderTimeout: 5 * time.Second,
@@ -73,6 +74,7 @@ func TestStartGateway(t *testing.T) {
 				Distributor: Upstream{
 					URL:                             distributorServer.URL,
 					Paths:                           nil,
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
@@ -80,6 +82,7 @@ func TestStartGateway(t *testing.T) {
 				QueryFrontend: Upstream{
 					URL:                             frontendServer.URL,
 					Paths:                           nil,
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
@@ -126,6 +129,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{
 						"/test/distributor",
 					},
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
@@ -135,6 +139,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{
 						"/test/frontend",
 					},
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,

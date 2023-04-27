@@ -41,6 +41,11 @@ var defaultQueryFrontendAPIs = []string{
 
 // TODO: create a helper function for error handling and parsing the duration
 func New(config *Config, srv *server.Server) (*Gateway, error) {
+	httpClientTimeout, err := time.ParseDuration(config.Distributor.HTTPClientTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+
 	httpClientDialerTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
 	if err != nil {
 		return nil, err
@@ -57,11 +62,17 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 	}
 
 	distributorTimeouts := Upstream{
+		HTTPClientTimeout:               httpClientTimeout,
 		HTTPClientDialerTimeout:         httpClientDialerTimeout,
 		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
 		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
 	}
 	distributor, err := NewProxy(config.Distributor.URL, distributorTimeouts, DISTRIBUTOR)
+	if err != nil {
+		return nil, err
+	}
+
+	httpClientTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientTimeout.String())
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +93,7 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 	}
 
 	frontendTimeouts := Upstream{
+		HTTPClientTimeout:               httpClientTimeout,
 		HTTPClientDialerTimeout:         httpClientDialerTimeout,
 		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
 		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
