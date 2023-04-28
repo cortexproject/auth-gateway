@@ -21,17 +21,11 @@ func TestNewGateway(t *testing.T) {
 	}
 
 	config := Config{
-		Distributor: struct {
-			URL   string   `yaml:"url"`
-			Paths []string `yaml:"paths"`
-		}{
+		Distributor: Upstream{
 			URL:   "http://localhost:8000",
 			Paths: nil,
 		},
-		QueryFrontend: struct {
-			URL   string   `yaml:"url"`
-			Paths []string `yaml:"paths"`
-		}{
+		QueryFrontend: Upstream{
 			URL:   "http://localhost:9000",
 			Paths: nil,
 		},
@@ -50,6 +44,13 @@ func TestStartGateway(t *testing.T) {
 
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	timeouts := Upstream{
+		HTTPClientTimeout:               20 * time.Second,
+		HTTPClientDialerTimeout:         10 * time.Second,
+		HTTPClientTLSHandshakeTimeout:   5 * time.Second,
+		HTTPClientResponseHeaderTimeout: 5 * time.Second,
+	}
 
 	testCases := []struct {
 		name           string
@@ -70,19 +71,21 @@ func TestStartGateway(t *testing.T) {
 						ID:             "orgid",
 					},
 				},
-				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
-					URL:   distributorServer.URL,
-					Paths: nil,
+				Distributor: Upstream{
+					URL:                             distributorServer.URL,
+					Paths:                           nil,
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
 				},
-				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
-					URL:   frontendServer.URL,
-					Paths: nil,
+				QueryFrontend: Upstream{
+					URL:                             frontendServer.URL,
+					Paths:                           nil,
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
 				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
@@ -121,23 +124,25 @@ func TestStartGateway(t *testing.T) {
 						ID:             "orgid",
 					},
 				},
-				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
+				Distributor: Upstream{
 					URL: distributorServer.URL,
 					Paths: []string{
 						"/test/distributor",
 					},
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
 				},
-				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
+				QueryFrontend: Upstream{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
 				},
 			},
 			paths: []string{
@@ -150,23 +155,20 @@ func TestStartGateway(t *testing.T) {
 		{
 			name: "not found route",
 			config: &Config{
-				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
+				Distributor: Upstream{
 					URL: distributorServer.URL,
 					Paths: []string{
 						"/test/distributor",
 					},
 				},
-				QueryFrontend: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
+				QueryFrontend: Upstream{
 					URL: frontendServer.URL,
 					Paths: []string{
 						"/test/frontend",
 					},
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 				},
 			},
 			paths: []string{
@@ -182,10 +184,7 @@ func TestStartGateway(t *testing.T) {
 		{
 			name: "invalid frontend proxy",
 			config: &Config{
-				Distributor: struct {
-					URL   string   `yaml:"url"`
-					Paths []string `yaml:"paths"`
-				}{
+				Distributor: Upstream{
 					URL:   distributorServer.URL,
 					Paths: []string{},
 				},

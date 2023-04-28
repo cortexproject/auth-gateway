@@ -21,20 +21,23 @@ const (
 )
 
 type Config struct {
-	HTTPRouter     *http.ServeMux
-	HTTPListenPort int
-	HTTPListenAddr string
-	HTTPMiddleware []middleware.Interface
+	HTTPRouter             *http.ServeMux
+	HTTPListenPort         int
+	HTTPListenAddr         string
+	HTTPMiddleware         []middleware.Interface
+	HTTPServerReadTimeout  time.Duration
+	HTTPServerWriteTimeout time.Duration
+	HTTPServerIdleTimeout  time.Duration
 
-	UnAuthorizedHTTPRouter     *http.ServeMux
-	UnAuthorizedHTTPListenAddr string
-	UnAuthorizedHTTPListenPort int
-	UnAuthorizedHTTPMiddleware []middleware.Interface
+	UnAuthorizedHTTPRouter             *http.ServeMux
+	UnAuthorizedHTTPListenAddr         string
+	UnAuthorizedHTTPListenPort         int
+	UnAuthorizedHTTPMiddleware         []middleware.Interface
+	UnAuthorizedHTTPServerReadTimeout  time.Duration
+	UnAuthorizedHTTPServerWriteTimeout time.Duration
+	UnAuthorizedHTTPServerIdleTimeout  time.Duration
 
 	ServerGracefulShutdownTimeout time.Duration
-	HTTPServerReadTimeout         time.Duration
-	HTTPServerWriteTimeout        time.Duration
-	HTTPServerIdleTimeout         time.Duration
 }
 
 type Server struct {
@@ -65,14 +68,39 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 		router = http.NewServeMux()
 	}
 
+	// These default values are the same as Cortex's server_config
+	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
+	readTimeout, err := time.ParseDuration(cfg.HTTPServerReadTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+	if readTimeout == 0 {
+		readTimeout = 30 * time.Second
+	}
+
+	writeTimeout, err := time.ParseDuration(cfg.HTTPServerWriteTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+	if writeTimeout == 0 {
+		writeTimeout = 30 * time.Second
+	}
+
+	idleTimeout, err := time.ParseDuration(cfg.HTTPServerIdleTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+	if idleTimeout == 0 {
+		idleTimeout = 2 * time.Minute
+	}
+
 	httpMiddleware := append(middlewares, cfg.HTTPMiddleware...)
 	httpServer := &http.Server{
-		Addr:    listenAddr,
-		Handler: middleware.Merge(httpMiddleware...).Wrap(router),
-
-		ReadTimeout:  cfg.HTTPServerReadTimeout,
-		WriteTimeout: cfg.HTTPServerWriteTimeout,
-		IdleTimeout:  cfg.HTTPServerIdleTimeout,
+		Addr:         listenAddr,
+		Handler:      middleware.Merge(httpMiddleware...).Wrap(router),
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	return &server{
@@ -95,12 +123,39 @@ func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server,
 	} else {
 		router = http.NewServeMux()
 	}
+
+	// These default values are the same as Cortex's server_config
+	// See: https://cortexmetrics.io/docs/configuration/configuration-file/#server_config
+	readTimeout, err := time.ParseDuration(cfg.UnAuthorizedHTTPServerReadTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+	if readTimeout == 0 {
+		readTimeout = 30 * time.Second
+	}
+
+	writeTimeout, err := time.ParseDuration(cfg.UnAuthorizedHTTPServerWriteTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+	if writeTimeout == 0 {
+		writeTimeout = 30 * time.Second
+	}
+
+	idleTimeout, err := time.ParseDuration(cfg.UnAuthorizedHTTPServerIdleTimeout.String())
+	if err != nil {
+		return nil, err
+	}
+	if idleTimeout == 0 {
+		idleTimeout = 2 * time.Minute
+	}
+
 	unauthHttpServer := &http.Server{
 		Addr:         listenAddr,
 		Handler:      middleware.Merge(middlewares...).Wrap(router),
-		ReadTimeout:  cfg.HTTPServerReadTimeout,
-		WriteTimeout: cfg.HTTPServerWriteTimeout,
-		IdleTimeout:  cfg.HTTPServerIdleTimeout,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	return &server{

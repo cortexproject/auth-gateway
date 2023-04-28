@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestNewProxy(t *testing.T) {
@@ -29,7 +30,7 @@ func TestNewProxy(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := NewProxy(tc.targetURL)
+			p, err := NewProxy(tc.targetURL, Upstream{}, "")
 			if (err != nil) != tc.expectErr {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -70,7 +71,12 @@ func TestHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			proxy, err := NewProxy("http://example.com")
+			proxy, err := NewProxy("http://example.com", Upstream{
+				HTTPClientTimeout:               time.Second * 15,
+				HTTPClientDialerTimeout:         time.Second * 5,
+				HTTPClientTLSHandshakeTimeout:   time.Second * 5,
+				HTTPClientResponseHeaderTimeout: time.Second * 5,
+			}, "")
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
