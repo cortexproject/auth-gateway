@@ -60,12 +60,17 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 	if err != nil {
 		return nil, err
 	}
+	dnsRefreshInterval, err := time.ParseDuration(config.Distributor.DNSRefreshInterval.String())
+	if err != nil {
+		return nil, err
+	}
 
 	distributorTimeouts := Upstream{
 		HTTPClientTimeout:               httpClientTimeout,
 		HTTPClientDialerTimeout:         httpClientDialerTimeout,
 		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
 		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
+		DNSRefreshInterval:              dnsRefreshInterval,
 	}
 	distributor, err := NewProxy(config.Distributor.URL, distributorTimeouts, DISTRIBUTOR)
 	if err != nil {
@@ -91,12 +96,17 @@ func New(config *Config, srv *server.Server) (*Gateway, error) {
 	if err != nil {
 		return nil, err
 	}
+	dnsRefreshInterval, err = time.ParseDuration(config.QueryFrontend.DNSRefreshInterval.String())
+	if err != nil {
+		return nil, err
+	}
 
 	frontendTimeouts := Upstream{
 		HTTPClientTimeout:               httpClientTimeout,
 		HTTPClientDialerTimeout:         httpClientDialerTimeout,
 		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
 		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
+		DNSRefreshInterval:              dnsRefreshInterval,
 	}
 	frontend, err := NewProxy(config.QueryFrontend.URL, frontendTimeouts, FRONTEND)
 	if err != nil {
