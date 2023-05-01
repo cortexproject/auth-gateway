@@ -136,6 +136,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 				QueryFrontend: Upstream{
 					URL: frontendServer.URL,
@@ -146,6 +147,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 			},
 			paths: []string{
