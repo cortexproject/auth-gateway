@@ -96,8 +96,7 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 		Transport: *http.DefaultTransport.(*http.Transport).Clone(),
 		lb:        newRoundRobinLoadBalancer(url.Hostname()),
 	}
-	lb := newRoundRobinLoadBalancer(url.Hostname())
-	go lb.refreshIPs(upstream.DNSRefreshInterval)
+	go t.lb.refreshIPs(upstream.DNSRefreshInterval)
 
 	d := &net.Dialer{
 		Timeout: dialerTimeout,
