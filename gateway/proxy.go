@@ -32,11 +32,11 @@ var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 
 type Proxy struct {
 	targetURL    *url.URL
-	timeouts     Upstream
+	upstream     Upstream
 	reverseProxy *httputil.ReverseProxy
 }
 
-func NewProxy(targetURL string, timeouts Upstream, component string) (*Proxy, error) {
+func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, error) {
 	url, err := url.Parse(targetURL)
 	if err != nil {
 		return nil, err
@@ -46,17 +46,17 @@ func NewProxy(targetURL string, timeouts Upstream, component string) (*Proxy, er
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(url)
-	reverseProxy.Transport = customTransport(component, timeouts)
+	reverseProxy.Transport = customTransport(component, upstream)
 	originalDirector := reverseProxy.Director
 	reverseProxy.Director = customDirector(url, originalDirector)
 
-	if timeouts.HTTPClientTimeout == 0 {
-		timeouts.HTTPClientTimeout = defaultTimeoutValues[component].HTTPClientTimeout
+	if upstream.HTTPClientTimeout == 0 {
+		upstream.HTTPClientTimeout = defaultTimeoutValues[component].HTTPClientTimeout
 	}
 
 	return &Proxy{
 		targetURL:    url,
-		timeouts:     timeouts,
+		upstream:     upstream,
 		reverseProxy: reverseProxy,
 	}, nil
 }
@@ -96,7 +96,7 @@ func customTransport(component string, timeouts Upstream) *http.Transport {
 func (p *Proxy) Handler(w http.ResponseWriter, r *http.Request) {
 	r.Header.Del("Authorization")
 
-	ctx, cancel := context.WithTimeout(r.Context(), p.timeouts.HTTPClientTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), p.upstream.HTTPClientTimeout)
 	defer cancel()
 	r = r.WithContext(ctx)
 

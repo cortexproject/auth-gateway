@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/cortexproject/auth-gateway/server"
 )
@@ -39,76 +38,13 @@ var defaultQueryFrontendAPIs = []string{
 	"/api/prom/api/v1/status/buildinfo",
 }
 
-// TODO: create a helper function for error handling and parsing the duration
 func New(config *Config, srv *server.Server) (*Gateway, error) {
-	httpClientTimeout, err := time.ParseDuration(config.Distributor.HTTPClientTimeout.String())
+	distributor, err := NewProxy(config.Distributor.URL, config.Distributor, DISTRIBUTOR)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClientDialerTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-
-	httpClientTLSHandshakeTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-
-	httpClientResponseHeaderTimeout, err := time.ParseDuration(config.Distributor.HTTPClientDialerTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-	dnsRefreshInterval, err := time.ParseDuration(config.Distributor.DNSRefreshInterval.String())
-	if err != nil {
-		return nil, err
-	}
-
-	distributorTimeouts := Upstream{
-		HTTPClientTimeout:               httpClientTimeout,
-		HTTPClientDialerTimeout:         httpClientDialerTimeout,
-		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
-		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
-		DNSRefreshInterval:              dnsRefreshInterval,
-	}
-	distributor, err := NewProxy(config.Distributor.URL, distributorTimeouts, DISTRIBUTOR)
-	if err != nil {
-		return nil, err
-	}
-
-	httpClientTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-
-	httpClientDialerTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientDialerTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-
-	httpClientTLSHandshakeTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientDialerTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-
-	httpClientResponseHeaderTimeout, err = time.ParseDuration(config.QueryFrontend.HTTPClientDialerTimeout.String())
-	if err != nil {
-		return nil, err
-	}
-	dnsRefreshInterval, err = time.ParseDuration(config.QueryFrontend.DNSRefreshInterval.String())
-	if err != nil {
-		return nil, err
-	}
-
-	frontendTimeouts := Upstream{
-		HTTPClientTimeout:               httpClientTimeout,
-		HTTPClientDialerTimeout:         httpClientDialerTimeout,
-		HTTPClientTLSHandshakeTimeout:   httpClientTLSHandshakeTimeout,
-		HTTPClientResponseHeaderTimeout: httpClientResponseHeaderTimeout,
-		DNSRefreshInterval:              dnsRefreshInterval,
-	}
-	frontend, err := NewProxy(config.QueryFrontend.URL, frontendTimeouts, FRONTEND)
+	frontend, err := NewProxy(config.QueryFrontend.URL, config.QueryFrontend, FRONTEND)
 	if err != nil {
 		return nil, err
 	}
