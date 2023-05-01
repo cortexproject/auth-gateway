@@ -68,21 +68,37 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 	}
 }
 
-func customTransport(component string, timeouts Upstream) *http.Transport {
-	dialerTimeout := timeouts.HTTPClientDialerTimeout * time.Second
+func customTransport(component string, upstream Upstream) http.RoundTripper {
+	dialerTimeout := upstream.HTTPClientDialerTimeout * time.Second
 	if dialerTimeout == 0 {
 		dialerTimeout = defaultTimeoutValues[component].HTTPClientDialerTimeout
 	}
-	TLSHandshakeTimeout := timeouts.HTTPClientTLSHandshakeTimeout * time.Second
+	TLSHandshakeTimeout := upstream.HTTPClientTLSHandshakeTimeout * time.Second
 	if TLSHandshakeTimeout == 0 {
 		TLSHandshakeTimeout = defaultTimeoutValues[component].HTTPClientTLSHandshakeTimeout
 	}
-	responseHeaderTimeout := timeouts.HTTPClientResponseHeaderTimeout * time.Second
+	responseHeaderTimeout := upstream.HTTPClientResponseHeaderTimeout * time.Second
 	if responseHeaderTimeout == 0 {
 		responseHeaderTimeout = defaultTimeoutValues[component].HTTPClientResponseHeaderTimeout
 	}
+	dnsRefreshInterval := upstream.DNSRefreshInterval * time.Second
+	if dnsRefreshInterval == 0 {
+		dnsRefreshInterval = 1 * time.Second
+	}
 
-	t := http.DefaultTransport.(*http.Transport).Clone()
+	url, err := url.Parse(upstream.URL)
+	if err != nil {
+		// TODO: log the error with logrus
+		fmt.Println(err)
+	}
+
+	t := &CustomTransport{
+		Transport: *http.DefaultTransport.(*http.Transport).Clone(),
+		lb:        newRoundRobinLoadBalancer(url.Hostname()),
+	}
+	lb := newRoundRobinLoadBalancer(url.Hostname())
+	go lb.refreshIPs(upstream.DNSRefreshInterval)
+
 	d := &net.Dialer{
 		Timeout: dialerTimeout,
 	}
