@@ -10,22 +10,34 @@ import (
 	"time"
 )
 
+type DNSResolver interface {
+	LookupIP(string) ([]net.IP, error)
+}
+
+type DefaultDNSResolver struct{}
+
+func (d DefaultDNSResolver) LookupIP(hostname string) ([]net.IP, error) {
+	return net.LookupIP(hostname)
+}
+
 type roundRobinLoadBalancer struct {
 	hostname     string
 	ips          []string
 	currentIndex int
 	transport    http.RoundTripper
+	resolveIPs   func(hostname string) ([]net.IP, error)
 	sync.RWMutex
 }
 
-func newRoundRobinLoadBalancer(hostname string) *roundRobinLoadBalancer {
+func newRoundRobinLoadBalancer(hostname string, resolver func(hostname string) ([]net.IP, error)) *roundRobinLoadBalancer {
 	lb := &roundRobinLoadBalancer{
-		hostname:  hostname,
-		transport: http.DefaultTransport,
+		hostname:   hostname,
+		transport:  http.DefaultTransport,
+		resolveIPs: resolver,
 	}
 
 	// Resolve IPs initially
-	ips, err := net.LookupIP(lb.hostname)
+	ips, err := lb.resolveIPs(hostname)
 	if err != nil {
 		log.Printf("Failed to resolve IPs for hostname %s: %v", lb.hostname, err)
 	} else {
@@ -44,17 +56,21 @@ func (lb *roundRobinLoadBalancer) roundTrip(req *http.Request) (*http.Response, 
 		return nil, fmt.Errorf("no IP addresses available")
 	}
 
-	ip := lb.ips[lb.currentIndex%len(lb.ips)]
+	ip := lb.getNextIP()
 	req.URL.Host = strings.Replace(req.URL.Host, lb.hostname, ip, 1)
 	lb.currentIndex++
 
 	return lb.transport.RoundTrip(req)
 }
 
+func (lb *roundRobinLoadBalancer) getNextIP() string {
+	return lb.ips[lb.currentIndex%len(lb.ips)]
+}
+
 // Refresh IPs periodically
 func (lb *roundRobinLoadBalancer) refreshIPs(refreshInterval time.Duration) {
 	for {
-		ips, err := net.LookupIP(lb.hostname)
+		ips, err := lb.resolveIPs(lb.hostname)
 		if err != nil {
 			// TODO: replace std library log package with logrus
 			log.Printf("Failed to resolve IPs for hostname %s: %v", lb.hostname, err)

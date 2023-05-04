@@ -92,9 +92,10 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 		fmt.Println(err)
 	}
 
+	resolver := DefaultDNSResolver{}
 	t := &CustomTransport{
 		Transport: *http.DefaultTransport.(*http.Transport).Clone(),
-		lb:        newRoundRobinLoadBalancer(url.Hostname()),
+		lb:        newRoundRobinLoadBalancer(url.Hostname(), resolver.LookupIP),
 	}
 	go t.lb.refreshIPs(upstream.DNSRefreshInterval)
 
