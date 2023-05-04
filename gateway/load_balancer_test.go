@@ -120,7 +120,7 @@ func TestDistribution(t *testing.T) {
 
 			requestCounts := make(map[string]int)
 			for i := 0; i < tc.numReqs; i++ {
-				req := httptest.NewRequest("GET", "http://"+lb.getNextIP(), nil)
+				req := httptest.NewRequest("GET", "http://"+lb.safeGetNextIP(), nil)
 				resp, err := lb.roundTrip(req)
 				if err == nil {
 					addr := req.URL.Host

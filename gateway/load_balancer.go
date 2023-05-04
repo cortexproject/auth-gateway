@@ -48,8 +48,8 @@ func newRoundRobinLoadBalancer(hostname string, resolver func(hostname string) (
 }
 
 func (lb *roundRobinLoadBalancer) roundTrip(req *http.Request) (*http.Response, error) {
-	lb.RLock()
-	defer lb.RUnlock()
+	lb.Lock()
+	defer lb.Unlock()
 
 	if len(lb.ips) == 0 {
 		// TODO: replace format error with a log statement
@@ -65,6 +65,13 @@ func (lb *roundRobinLoadBalancer) roundTrip(req *http.Request) (*http.Response, 
 
 func (lb *roundRobinLoadBalancer) getNextIP() string {
 	return lb.ips[lb.currentIndex%len(lb.ips)]
+}
+
+func (lb *roundRobinLoadBalancer) safeGetNextIP() string {
+	lb.RLock()
+	defer lb.RUnlock()
+
+	return lb.getNextIP()
 }
 
 // Refresh IPs periodically
