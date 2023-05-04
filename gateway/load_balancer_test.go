@@ -119,7 +119,7 @@ func TestDistribution(t *testing.T) {
 			go lb.refreshIPs(tc.refreshInterval)
 
 			requestCounts := make(map[string]int)
-			for i := 0; i < 1000; i++ {
+			for i := 0; i < tc.numReqs; i++ {
 				req := httptest.NewRequest("GET", "http://"+lb.getNextIP(), nil)
 				resp, err := lb.roundTrip(req)
 				if err == nil {
@@ -128,7 +128,7 @@ func TestDistribution(t *testing.T) {
 					requestCounts[ip]++
 					resp.Body.Close()
 				} else {
-					t.Log(err)
+					t.Fatal(err)
 				}
 				time.Sleep(10 * time.Millisecond)
 			}
