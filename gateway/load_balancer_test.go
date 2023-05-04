@@ -114,7 +114,7 @@ func TestDistribution(t *testing.T) {
 			}
 
 			lb := newRoundRobinLoadBalancer(hostname, mockResolver.LookupIP)
-			lb.transport = customRoundTripper{}
+			lb.transport = &customRoundTripper{}
 
 			go lb.refreshIPs(tc.refreshInterval)
 
