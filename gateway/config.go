@@ -18,6 +18,7 @@ type Config struct {
 type Upstream struct {
 	URL                             string        `yaml:"url"`
 	Paths                           []string      `yaml:"paths"`
+	DNSRefreshInterval              time.Duration `yaml:"dns_refresh_interval"`
 	HTTPClientTimeout               time.Duration `yaml:"http_client_timeout"`
 	HTTPClientDialerTimeout         time.Duration `yaml:"http_client_dialer_timeout"`
 	HTTPClientTLSHandshakeTimeout   time.Duration `yaml:"http_client_tls_handshake_timeout"`

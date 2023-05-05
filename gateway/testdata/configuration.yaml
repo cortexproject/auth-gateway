@@ -19,12 +19,14 @@ tenants:
     password: password2
     id: "orgid"
 distributor:
+  dns_refresh_interval: 3s
   url: http://127.0.0.1:9009
   paths: 
   - /api/v1/push
   - /api/prom/push
   http_client_timeout: 10s
 frontend:
+  dns_refresh_interval: 3s
   url: http://127.0.0.1:9010
   paths:
   - /api/prom/api/v1/labels

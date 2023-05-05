@@ -71,17 +71,20 @@ func TestHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			proxy, err := NewProxy("http://example.com", Upstream{
+			mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+			proxy, err := NewProxy(mockServer.URL, Upstream{
+				URL:                             mockServer.URL,
 				HTTPClientTimeout:               time.Second * 15,
 				HTTPClientDialerTimeout:         time.Second * 5,
 				HTTPClientTLSHandshakeTimeout:   time.Second * 5,
 				HTTPClientResponseHeaderTimeout: time.Second * 5,
+				DNSRefreshInterval:              time.Second * 3,
 			}, "")
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 
-			req, err := http.NewRequest("GET", "http://example.com", nil)
+			req, err := http.NewRequest("GET", mockServer.URL, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

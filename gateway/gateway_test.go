@@ -50,6 +50,7 @@ func TestStartGateway(t *testing.T) {
 		HTTPClientDialerTimeout:         10 * time.Second,
 		HTTPClientTLSHandshakeTimeout:   5 * time.Second,
 		HTTPClientResponseHeaderTimeout: 5 * time.Second,
+		DNSRefreshInterval:              3 * time.Second,
 	}
 
 	testCases := []struct {
@@ -78,6 +79,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 				QueryFrontend: Upstream{
 					URL:                             frontendServer.URL,
@@ -86,6 +88,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
@@ -133,6 +136,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 				QueryFrontend: Upstream{
 					URL: frontendServer.URL,
@@ -143,6 +147,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 			},
 			paths: []string{
@@ -169,6 +174,7 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
 					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
 			},
 			paths: []string{
