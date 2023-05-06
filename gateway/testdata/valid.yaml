@@ -24,3 +24,8 @@ alertmanager:
   paths:
     - /alertmanager/
     - /multitenant_alertmanager/delete_tenant_config
+ruler:
+  url: http://localhost:8084
+  paths:
+    - /prometheus/api/v1/rules
+    - /api/prom/api/v1/alerts

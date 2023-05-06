@@ -14,6 +14,7 @@ const (
 	DISTRIBUTOR  = "distributor"
 	FRONTEND     = "frontend"
 	ALERTMANAGER = "alertmanager"
+	RULER        = "ruler"
 )
 
 var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
@@ -34,6 +35,12 @@ var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 		HTTPClientDialerTimeout:         time.Second * 5,
 		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
+	},
+	RULER: {
+		HTTPClientTimeout:               time.Second * 10,
+		HTTPClientDialerTimeout:         time.Second * 3,
+		HTTPClientTLSHandshakeTimeout:   time.Second * 4,
+		HTTPClientResponseHeaderTimeout: time.Second * 3,
 	},
 }
 
