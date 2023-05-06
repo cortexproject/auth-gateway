@@ -48,6 +48,13 @@ func TestInit(t *testing.T) {
 						"/prometheus/api/v1/query_range",
 					},
 				},
+				Alertmanager: Upstream{
+					URL: "http://localhost:8083",
+					Paths: []string{
+						"/alertmanager/",
+						"/multitenant_alertmanager/delete_tenant_config",
+					},
+				},
 			},
 			wantErr: nil,
 		},

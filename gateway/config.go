@@ -13,6 +13,7 @@ type Config struct {
 	Tenants       []Tenant     `yaml:"tenants"`
 	Distributor   Upstream     `yaml:"distributor"`
 	QueryFrontend Upstream     `yaml:"frontend"`
+	Alertmanager  Upstream     `yaml:"alertmanager"`
 }
 
 type Upstream struct {

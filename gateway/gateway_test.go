@@ -22,11 +22,15 @@ func TestNewGateway(t *testing.T) {
 
 	config := Config{
 		Distributor: Upstream{
-			URL:   "http://localhost:8000",
+			URL:   "http://localhost:9001",
 			Paths: nil,
 		},
 		QueryFrontend: Upstream{
-			URL:   "http://localhost:9000",
+			URL:   "http://localhost:9002",
+			Paths: nil,
+		},
+		Alertmanager: Upstream{
+			URL:   "http://localhost:9003",
 			Paths: nil,
 		},
 	}
@@ -44,6 +48,7 @@ func TestStartGateway(t *testing.T) {
 
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	alertmanagerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	timeouts := Upstream{
 		HTTPClientTimeout:               20 * time.Second,
@@ -90,6 +95,15 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
 					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
+				Alertmanager: Upstream{
+					URL:                             alertmanagerServer.URL,
+					Paths:                           nil,
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
+				},
 			},
 			authHeader: "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
 			paths: []string{
@@ -113,6 +127,9 @@ func TestStartGateway(t *testing.T) {
 				"/api/prom/api/v1/read",
 				"/prometheus/api/v1/status/buildinfo",
 				"/api/prom/api/v1/status/buildinfo",
+				"/alertmanager/",
+				"/api/v1/alerts",
+				"/multitenant_alertmanager/delete_tenant_config",
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -149,10 +166,22 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
 					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
+				Alertmanager: Upstream{
+					URL: alertmanagerServer.URL,
+					Paths: []string{
+						"/test/alertmanager",
+					},
+					HTTPClientTimeout:               timeouts.HTTPClientTimeout,
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout * time.Second,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout * time.Second,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout * time.Second,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
+				},
 			},
 			paths: []string{
 				"/test/distributor",
 				"/test/frontend",
+				"/test/alertmanager",
 			},
 			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
 			expectedStatus: http.StatusOK,
@@ -176,6 +205,16 @@ func TestStartGateway(t *testing.T) {
 					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
 					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
 				},
+				Alertmanager: Upstream{
+					URL: alertmanagerServer.URL,
+					Paths: []string{
+						"/test/alertmanager",
+					},
+					HTTPClientDialerTimeout:         timeouts.HTTPClientDialerTimeout,
+					HTTPClientTLSHandshakeTimeout:   timeouts.HTTPClientTLSHandshakeTimeout,
+					HTTPClientResponseHeaderTimeout: timeouts.HTTPClientResponseHeaderTimeout,
+					DNSRefreshInterval:              timeouts.DNSRefreshInterval,
+				},
 			},
 			paths: []string{
 				"/not/found",
@@ -192,6 +231,20 @@ func TestStartGateway(t *testing.T) {
 			config: &Config{
 				Distributor: Upstream{
 					URL:   distributorServer.URL,
+					Paths: []string{},
+				},
+			},
+			expectedErr: errors.New("invalid URL scheme:"),
+		},
+		{
+			name: "invalid alertmanager proxy",
+			config: &Config{
+				Distributor: Upstream{
+					URL:   distributorServer.URL,
+					Paths: []string{},
+				},
+				QueryFrontend: Upstream{
+					URL:   frontendServer.URL,
 					Paths: []string{},
 				},
 			},

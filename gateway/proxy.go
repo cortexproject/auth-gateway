@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	DISTRIBUTOR = "distributor"
-	FRONTEND    = "frontend"
+	DISTRIBUTOR  = "distributor"
+	FRONTEND     = "frontend"
+	ALERTMANAGER = "alertmanager"
 )
 
 var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
@@ -24,6 +25,12 @@ var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 	},
 	FRONTEND: {
 		HTTPClientTimeout:               time.Minute * 1,
+		HTTPClientDialerTimeout:         time.Second * 5,
+		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
+		HTTPClientResponseHeaderTimeout: time.Second * 5,
+	},
+	ALERTMANAGER: {
+		HTTPClientTimeout:               time.Second * 15,
 		HTTPClientDialerTimeout:         time.Second * 5,
 		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
