@@ -51,6 +51,7 @@ var defaultRulerAPIs = []string{
 	"/api/prom/api/v1/rules",
 	"/prometheus/api/v1/alerts",
 	"/api/prom/api/v1/alerts",
+	"/api/v1/rules",
 	"/api/v1/rules/",
 	"/api/prom/rules/",
 	"/ruler/delete_tenant_config",
