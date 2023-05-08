@@ -14,6 +14,7 @@ type Config struct {
 	Distributor   Upstream     `yaml:"distributor"`
 	QueryFrontend Upstream     `yaml:"frontend"`
 	Alertmanager  Upstream     `yaml:"alertmanager"`
+	Ruler         Upstream     `yaml:"ruler"`
 }
 
 type Upstream struct {

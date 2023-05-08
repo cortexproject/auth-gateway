@@ -55,6 +55,13 @@ func TestInit(t *testing.T) {
 						"/multitenant_alertmanager/delete_tenant_config",
 					},
 				},
+				Ruler: Upstream{
+					URL: "http://localhost:8084",
+					Paths: []string{
+						"/prometheus/api/v1/rules",
+						"/api/prom/api/v1/alerts",
+					},
+				},
 			},
 			wantErr: nil,
 		},
