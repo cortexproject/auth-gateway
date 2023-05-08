@@ -37,10 +37,10 @@ var defaultTimeoutValues map[string]Upstream = map[string]Upstream{
 		HTTPClientResponseHeaderTimeout: time.Second * 5,
 	},
 	RULER: {
-		HTTPClientTimeout:               time.Second * 10,
-		HTTPClientDialerTimeout:         time.Second * 3,
-		HTTPClientTLSHandshakeTimeout:   time.Second * 4,
-		HTTPClientResponseHeaderTimeout: time.Second * 3,
+		HTTPClientTimeout:               time.Second * 15,
+		HTTPClientDialerTimeout:         time.Second * 5,
+		HTTPClientTLSHandshakeTimeout:   time.Second * 5,
+		HTTPClientResponseHeaderTimeout: time.Second * 5,
 	},
 }
 
