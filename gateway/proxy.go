@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cortexproject/auth-gateway/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -54,13 +55,6 @@ type Proxy struct {
 	reverseProxy *httputil.ReverseProxy
 }
 
-type logrusErrorWriter struct{}
-
-func (w logrusErrorWriter) Write(p []byte) (n int, err error) {
-	logrus.Errorf("%s", string(p))
-	return len(p), nil
-}
-
 func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, error) {
 	url, err := url.Parse(targetURL)
 	if err != nil {
@@ -74,7 +68,7 @@ func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, er
 	reverseProxy.Transport = customTransport(component, upstream)
 	originalDirector := reverseProxy.Director
 	reverseProxy.Director = customDirector(url, originalDirector)
-	reverseProxy.ErrorLog = log.New(logrusErrorWriter{}, "", 0)
+	reverseProxy.ErrorLog = log.New(utils.LogrusErrorWriter{}, "", 0)
 
 	if upstream.HTTPClientTimeout == 0 {
 		upstream.HTTPClientTimeout = defaultTimeoutValues[component].HTTPClientTimeout
