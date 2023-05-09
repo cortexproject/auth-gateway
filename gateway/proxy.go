@@ -3,11 +3,15 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -50,6 +54,13 @@ type Proxy struct {
 	reverseProxy *httputil.ReverseProxy
 }
 
+type logrusErrorWriter struct{}
+
+func (w logrusErrorWriter) Write(p []byte) (n int, err error) {
+	logrus.Errorf("%s", string(p))
+	return len(p), nil
+}
+
 func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, error) {
 	url, err := url.Parse(targetURL)
 	if err != nil {
@@ -63,6 +74,7 @@ func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, er
 	reverseProxy.Transport = customTransport(component, upstream)
 	originalDirector := reverseProxy.Director
 	reverseProxy.Director = customDirector(url, originalDirector)
+	reverseProxy.ErrorLog = log.New(logrusErrorWriter{}, "", 0)
 
 	if upstream.HTTPClientTimeout == 0 {
 		upstream.HTTPClientTimeout = defaultTimeoutValues[component].HTTPClientTimeout
@@ -102,8 +114,8 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 
 	url, err := url.Parse(upstream.URL)
 	if err != nil {
-		// TODO: log the error with logrus
-		fmt.Println(err)
+		logrus.Errorf("unexpected error when parsing the upstream url: %s", err)
+		os.Exit(1)
 	}
 
 	resolver := DefaultDNSResolver{}

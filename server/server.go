@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -172,8 +173,7 @@ func (s *Server) RegisterTo(pattern string, handler http.Handler, where string) 
 	case UNAUTH:
 		s.unAuthServer.http.Handle(pattern, handler)
 	default:
-		// TODO: replace this with a logger or something else
-		fmt.Println("unknown")
+		logrus.Warnf("unexpected parameter: %s, valid options: %s, %s, %s not registered", where, AUTH, UNAUTH, pattern)
 	}
 }
 
