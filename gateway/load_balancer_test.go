@@ -113,7 +113,10 @@ func TestDistribution(t *testing.T) {
 				Err: nil,
 			}
 
-			lb := newRoundRobinLoadBalancer(hostname, mockResolver.LookupIP)
+			lb, err := newRoundRobinLoadBalancer(hostname, mockResolver.LookupIP)
+			if err != nil {
+				t.Fatal(err)
+			}
 			lb.transport = &customRoundTripper{}
 
 			go lb.refreshIPs(tc.refreshInterval)

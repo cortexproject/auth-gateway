@@ -67,7 +67,7 @@ func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, er
 		return nil, err
 	}
 	if url.Scheme == "" {
-		return nil, fmt.Errorf("invalid URL scheme: %s", targetURL)
+		return nil, fmt.Errorf("invalid URL scheme when creating a proxy for the %s: %s", component, targetURL)
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(url)
@@ -114,14 +114,18 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 
 	url, err := url.Parse(upstream.URL)
 	if err != nil {
-		logrus.Errorf("unexpected error when parsing the upstream url: %s", err)
+		logrus.Errorf("unexpected error when parsing the upstream url: %v", err)
 		os.Exit(1)
 	}
 
 	resolver := DefaultDNSResolver{}
+	lb, err := newRoundRobinLoadBalancer(url.Hostname(), resolver.LookupIP)
+	if err != nil {
+		logrus.Errorf("unexpected error when creating the load balancer: %v", err)
+	}
 	t := &CustomTransport{
 		Transport: *http.DefaultTransport.(*http.Transport).Clone(),
-		lb:        newRoundRobinLoadBalancer(url.Hostname(), resolver.LookupIP),
+		lb:        lb,
 	}
 	go t.lb.refreshIPs(upstream.DNSRefreshInterval)
 

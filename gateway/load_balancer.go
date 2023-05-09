@@ -2,12 +2,13 @@ package gateway
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type DNSResolver interface {
@@ -29,7 +30,7 @@ type roundRobinLoadBalancer struct {
 	sync.RWMutex
 }
 
-func newRoundRobinLoadBalancer(hostname string, resolver func(hostname string) ([]net.IP, error)) *roundRobinLoadBalancer {
+func newRoundRobinLoadBalancer(hostname string, resolver func(hostname string) ([]net.IP, error)) (*roundRobinLoadBalancer, error) {
 	lb := &roundRobinLoadBalancer{
 		hostname:   hostname,
 		transport:  http.DefaultTransport,
@@ -39,12 +40,13 @@ func newRoundRobinLoadBalancer(hostname string, resolver func(hostname string) (
 	// Resolve IPs initially
 	ips, err := lb.resolveIPs(hostname)
 	if err != nil {
-		log.Printf("Failed to resolve IPs for hostname %s: %v", lb.hostname, err)
+		logrus.Errorf("failed to resolve IPs for hostname %s: %v", lb.hostname, err)
+		return nil, err
 	} else {
 		lb.ips = ipsToStrings(ips)
 	}
 
-	return lb
+	return lb, nil
 }
 
 func (lb *roundRobinLoadBalancer) roundTrip(req *http.Request) (*http.Response, error) {
@@ -52,8 +54,9 @@ func (lb *roundRobinLoadBalancer) roundTrip(req *http.Request) (*http.Response, 
 	defer lb.Unlock()
 
 	if len(lb.ips) == 0 {
-		// TODO: replace format error with a log statement
-		return nil, fmt.Errorf("no IP addresses available")
+		errMsg := fmt.Sprintln("no IP addresses available")
+		logrus.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	ip := lb.getNextIP()
@@ -79,8 +82,7 @@ func (lb *roundRobinLoadBalancer) refreshIPs(refreshInterval time.Duration) {
 	for {
 		ips, err := lb.resolveIPs(lb.hostname)
 		if err != nil {
-			// TODO: replace std library log package with logrus
-			log.Printf("Failed to resolve IPs for hostname %s: %v", lb.hostname, err)
+			logrus.Errorf("failed to resolve IPs for hostname %s: %v", lb.hostname, err)
 		} else {
 			lb.Lock()
 			lb.ips = ipsToStrings(ips)
