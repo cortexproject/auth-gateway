@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/cortexproject/auth-gateway/utils"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -65,7 +63,11 @@ func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, er
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(url)
-	reverseProxy.Transport = customTransport(component, upstream)
+	transport, err := customTransport(component, upstream)
+	if err != nil {
+		return nil, err
+	}
+	reverseProxy.Transport = transport
 	originalDirector := reverseProxy.Director
 	reverseProxy.Director = customDirector(url, originalDirector)
 	reverseProxy.ErrorLog = log.New(utils.LogrusErrorWriter{}, "", 0)
@@ -88,7 +90,7 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 	}
 }
 
-func customTransport(component string, upstream Upstream) http.RoundTripper {
+func customTransport(component string, upstream Upstream) (http.RoundTripper, error) {
 	dialerTimeout := upstream.HTTPClientDialerTimeout * time.Second
 	if dialerTimeout == 0 {
 		dialerTimeout = defaultTimeoutValues[component].HTTPClientDialerTimeout
@@ -108,14 +110,13 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 
 	url, err := url.Parse(upstream.URL)
 	if err != nil {
-		logrus.Errorf("unexpected error when parsing the upstream url: %v", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("unexpected error when parsing the upstream url: %v", err)
 	}
 
 	resolver := DefaultDNSResolver{}
 	lb, err := newRoundRobinLoadBalancer(url.Hostname(), resolver.LookupIP)
 	if err != nil {
-		logrus.Errorf("unexpected error when creating the load balancer: %v", err)
+		return nil, fmt.Errorf("unexpected error when creating the load balancer: %v", err)
 	}
 	t := &CustomTransport{
 		Transport: *http.DefaultTransport.(*http.Transport).Clone(),
@@ -130,7 +131,7 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 	t.TLSHandshakeTimeout = TLSHandshakeTimeout
 	t.ResponseHeaderTimeout = responseHeaderTimeout
 
-	return t
+	return t, nil
 }
 
 func (p *Proxy) Handler(w http.ResponseWriter, r *http.Request) {

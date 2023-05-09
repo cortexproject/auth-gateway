@@ -266,7 +266,7 @@ func TestStartGateway(t *testing.T) {
 		{
 			name:        "invalid distributor proxy",
 			config:      &Config{},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid frontend proxy",
@@ -276,7 +276,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid alertmanager proxy",
@@ -290,7 +290,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid ruler proxy",
@@ -308,7 +308,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 	}
 
