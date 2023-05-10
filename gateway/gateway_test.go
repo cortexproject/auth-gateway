@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -48,8 +47,6 @@ func TestNewGateway(t *testing.T) {
 }
 
 func TestStartGateway(t *testing.T) {
-	InitLogger(os.Stdout)
-
 	distributorServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	frontendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	alertmanagerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -266,7 +263,7 @@ func TestStartGateway(t *testing.T) {
 		{
 			name:        "invalid distributor proxy",
 			config:      &Config{},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid frontend proxy",
@@ -276,7 +273,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid alertmanager proxy",
@@ -290,7 +287,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid ruler proxy",
@@ -308,7 +305,7 @@ func TestStartGateway(t *testing.T) {
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 	}
 

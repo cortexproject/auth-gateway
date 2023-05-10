@@ -4,12 +4,10 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
 
 func TestAuthenticate(t *testing.T) {
-	InitLogger(os.Stdout)
 	testCases := []struct {
 		name           string
 		config         *Config

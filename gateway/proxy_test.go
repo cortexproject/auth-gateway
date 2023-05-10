@@ -11,18 +11,29 @@ func TestNewProxy(t *testing.T) {
 	testCases := []struct {
 		name       string
 		targetURL  string
+		upstream   Upstream
 		expectErr  bool
 		expectHost string
 	}{
 		{
-			name:       "invalid URL",
-			targetURL:  "invalid url",
+			name:      "invalid URL",
+			targetURL: "invalid url",
+			upstream: Upstream{
+				URL:   "",
+				Paths: []string{},
+			},
 			expectErr:  true,
 			expectHost: "",
 		},
 		{
-			name:       "valid URL",
-			targetURL:  "http://localhost:8080",
+			name: "valid URL",
+			upstream: Upstream{
+				URL: "http://localhost:8080",
+				Paths: []string{
+					"/api/v1",
+					"/api/v1/push",
+				},
+			},
 			expectErr:  false,
 			expectHost: "localhost:8080",
 		},
@@ -30,7 +41,7 @@ func TestNewProxy(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := NewProxy(tc.targetURL, Upstream{}, "")
+			p, err := NewProxy(tc.upstream.URL, tc.upstream, DISTRIBUTOR)
 			if (err != nil) != tc.expectErr {
 				t.Errorf("unexpected error: %v", err)
 				return
