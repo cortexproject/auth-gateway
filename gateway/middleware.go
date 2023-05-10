@@ -36,7 +36,7 @@ func (a Authentication) Wrap(next http.Handler) http.Handler {
 		if ok {
 			next.ServeHTTP(sr, r)
 		} else {
-			logrus.Infof("No valid tenant credentials are found")
+			logrus.Debugf("No valid tenant credentials are found")
 			sr.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(sr, "Unauthorized", http.StatusUnauthorized)
 		}
