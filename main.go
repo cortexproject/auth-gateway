@@ -7,6 +7,7 @@ import (
 	"github.com/cortexproject/auth-gateway/gateway"
 	"github.com/cortexproject/auth-gateway/middleware"
 	"github.com/cortexproject/auth-gateway/server"
+	"github.com/cortexproject/auth-gateway/utils"
 )
 
 func main() {
@@ -15,11 +16,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	gateway.InitLogger(os.Stdout)
-
 	filePath := os.Args[1]
 	conf, err := gateway.Init(filePath)
-	gateway.CheckErr("reading the configuration file", err)
+	utils.CheckErr("reading the configuration file", err)
 
 	serverConf := server.Config{
 		HTTPListenAddr: conf.Server.Address,
@@ -37,12 +36,12 @@ func main() {
 		UnAuthorizedHTTPServerIdleTimeout:  conf.Admin.IdleTimeout,
 	}
 	server, err := server.New(serverConf)
-	gateway.CheckErr("initializing the server", err)
+	utils.CheckErr("initializing the server", err)
 
 	defer server.Shutdown()
 
 	gtw, err := gateway.New(&conf, server)
-	gateway.CheckErr("initializing the gateway", err)
+	utils.CheckErr("initializing the gateway", err)
 
 	gtw.Start(&conf)
 

@@ -3,11 +3,14 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
+
+	"github.com/cortexproject/auth-gateway/utils"
 )
 
 const (
@@ -56,13 +59,18 @@ func NewProxy(targetURL string, upstream Upstream, component string) (*Proxy, er
 		return nil, err
 	}
 	if url.Scheme == "" {
-		return nil, fmt.Errorf("invalid URL scheme: %s", targetURL)
+		return nil, fmt.Errorf("invalid URL scheme when creating a proxy for the %s: %s", component, targetURL)
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(url)
-	reverseProxy.Transport = customTransport(component, upstream)
+	transport, err := customTransport(component, upstream)
+	if err != nil {
+		return nil, err
+	}
+	reverseProxy.Transport = transport
 	originalDirector := reverseProxy.Director
 	reverseProxy.Director = customDirector(url, originalDirector)
+	reverseProxy.ErrorLog = log.New(utils.LogrusErrorWriter{}, "", 0)
 
 	if upstream.HTTPClientTimeout == 0 {
 		upstream.HTTPClientTimeout = defaultTimeoutValues[component].HTTPClientTimeout
@@ -82,7 +90,7 @@ func customDirector(targetURL *url.URL, originalDirector func(*http.Request)) fu
 	}
 }
 
-func customTransport(component string, upstream Upstream) http.RoundTripper {
+func customTransport(component string, upstream Upstream) (http.RoundTripper, error) {
 	dialerTimeout := upstream.HTTPClientDialerTimeout * time.Second
 	if dialerTimeout == 0 {
 		dialerTimeout = defaultTimeoutValues[component].HTTPClientDialerTimeout
@@ -102,14 +110,17 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 
 	url, err := url.Parse(upstream.URL)
 	if err != nil {
-		// TODO: log the error with logrus
-		fmt.Println(err)
+		return nil, fmt.Errorf("unexpected error when parsing the upstream url: %v", err)
 	}
 
 	resolver := DefaultDNSResolver{}
+	lb, err := newRoundRobinLoadBalancer(url.Hostname(), resolver.LookupIP)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error when creating the load balancer: %v", err)
+	}
 	t := &CustomTransport{
 		Transport: *http.DefaultTransport.(*http.Transport).Clone(),
-		lb:        newRoundRobinLoadBalancer(url.Hostname(), resolver.LookupIP),
+		lb:        lb,
 	}
 	go t.lb.refreshIPs(upstream.DNSRefreshInterval)
 
@@ -120,7 +131,7 @@ func customTransport(component string, upstream Upstream) http.RoundTripper {
 	t.TLSHandshakeTimeout = TLSHandshakeTimeout
 	t.ResponseHeaderTimeout = responseHeaderTimeout
 
-	return t
+	return t, nil
 }
 
 func (p *Proxy) Handler(w http.ResponseWriter, r *http.Request) {

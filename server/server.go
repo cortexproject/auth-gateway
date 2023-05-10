@@ -3,15 +3,18 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/http/pprof"
 	"time"
 
 	"github.com/cortexproject/auth-gateway/middleware"
+	"github.com/cortexproject/auth-gateway/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -101,6 +104,7 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		IdleTimeout:  idleTimeout,
+		ErrorLog:     log.New(utils.LogrusErrorWriter{}, "", 0),
 	}
 
 	return &server{
@@ -156,6 +160,7 @@ func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server,
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		IdleTimeout:  idleTimeout,
+		ErrorLog:     log.New(utils.LogrusErrorWriter{}, "", 0),
 	}
 
 	return &server{
@@ -172,8 +177,7 @@ func (s *Server) RegisterTo(pattern string, handler http.Handler, where string) 
 	case UNAUTH:
 		s.unAuthServer.http.Handle(pattern, handler)
 	default:
-		// TODO: replace this with a logger or something else
-		fmt.Println("unknown")
+		logrus.Warnf("unexpected parameter: %s, valid options: %s, %s, %s not registered", where, AUTH, UNAUTH, pattern)
 	}
 }
 
@@ -218,7 +222,7 @@ func New(cfg Config) (*Server, error) {
 }
 
 func (s *Server) Run() error {
-	fmt.Println("server has started")
+	logrus.Infof("the server has started listening on %v", s.authServer.httpServer.Addr)
 	errChan := make(chan error, 1)
 
 	go func() {
