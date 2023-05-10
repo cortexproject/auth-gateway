@@ -264,51 +264,56 @@ func TestStartGateway(t *testing.T) {
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:        "invalid distributor proxy",
-			config:      &Config{},
-			expectedErr: errors.New("invalid URL scheme:"),
+			name: "invalid distributor proxy",
+			config: &Config{
+				Distributor: Upstream{
+					URL:   "localhost",
+					Paths: []string{},
+				},
+			},
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid frontend proxy",
 			config: &Config{
 				Distributor: Upstream{
-					URL:   distributorServer.URL,
+					URL:   "localhost",
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid alertmanager proxy",
 			config: &Config{
 				Distributor: Upstream{
-					URL:   distributorServer.URL,
+					URL:   "localhost",
 					Paths: []string{},
 				},
 				QueryFrontend: Upstream{
-					URL:   frontendServer.URL,
+					URL:   "localhost",
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 		{
 			name: "invalid ruler proxy",
 			config: &Config{
 				Distributor: Upstream{
-					URL:   distributorServer.URL,
+					URL:   "localhost",
 					Paths: []string{},
 				},
 				QueryFrontend: Upstream{
-					URL:   frontendServer.URL,
+					URL:   "localhost",
 					Paths: []string{},
 				},
 				Alertmanager: Upstream{
-					URL:   alertmanagerServer.URL,
+					URL:   "localhost",
 					Paths: []string{},
 				},
 			},
-			expectedErr: errors.New("invalid URL scheme:"),
+			expectedErr: errors.New("invalid URL scheme"),
 		},
 	}
 

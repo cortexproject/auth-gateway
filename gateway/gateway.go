@@ -111,8 +111,10 @@ func setupProxy(upstreamConfig Upstream, proxyType string, description string) (
 			return nil, err
 		}
 		return proxy, nil
+	} else {
+		logrus.Infof("%s URL configuration not provided. %s will not be set up.", description, description)
 	}
-	logrus.Infof("%s URL configuration not provided. %s will not be set up.", description, description)
+
 	return nil, nil
 }
 
