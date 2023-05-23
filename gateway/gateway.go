@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	"github.com/cortexproject/auth-gateway/server"
+	"github.com/sirupsen/logrus"
 )
 
 type Gateway struct {
 	distributorProxy   *Proxy
 	queryFrontendProxy *Proxy
 	alertmanagerProxy  *Proxy
-	ruler              *Proxy
+	rulerProxy         *Proxy
 	srv                *server.Server
 }
 
@@ -58,44 +59,70 @@ var defaultRulerAPIs = []string{
 }
 
 func New(config *Config, srv *server.Server) (*Gateway, error) {
-	distributor, err := NewProxy(config.Distributor.URL, config.Distributor, DISTRIBUTOR)
-	if err != nil {
-		return nil, err
+	gateway := &Gateway{
+		srv: srv,
 	}
 
-	frontend, err := NewProxy(config.QueryFrontend.URL, config.QueryFrontend, FRONTEND)
-	if err != nil {
-		return nil, err
+	components := []string{DISTRIBUTOR, FRONTEND, ALERTMANAGER, RULER}
+	for _, componentName := range components {
+		upstreamConfig := config.getUpstreamConfig(componentName)
+		proxy, err := setupProxy(upstreamConfig, componentName, componentName)
+		if err != nil {
+			return nil, err
+		}
+		switch componentName {
+		case DISTRIBUTOR:
+			gateway.distributorProxy = proxy
+		case FRONTEND:
+			gateway.queryFrontendProxy = proxy
+		case ALERTMANAGER:
+			gateway.alertmanagerProxy = proxy
+		case RULER:
+			gateway.rulerProxy = proxy
+		}
 	}
 
-	alertmanager, err := NewProxy(config.Alertmanager.URL, config.Alertmanager, ALERTMANAGER)
-	if err != nil {
-		return nil, err
-	}
-
-	ruler, err := NewProxy(config.Ruler.URL, config.Ruler, RULER)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Gateway{
-		distributorProxy:   distributor,
-		queryFrontendProxy: frontend,
-		alertmanagerProxy:  alertmanager,
-		ruler:              ruler,
-		srv:                srv,
-	}, nil
+	return gateway, nil
 }
 
 func (g *Gateway) Start(config *Config) {
 	g.registerRoutes(config)
 }
 
+func (c *Config) getUpstreamConfig(componentName string) Upstream {
+	switch componentName {
+	case DISTRIBUTOR:
+		return c.Distributor
+	case FRONTEND:
+		return c.QueryFrontend
+	case ALERTMANAGER:
+		return c.Alertmanager
+	case RULER:
+		return c.Ruler
+	default:
+		return Upstream{}
+	}
+}
+
+func setupProxy(upstreamConfig Upstream, proxyType string, description string) (*Proxy, error) {
+	if upstreamConfig.URL != "" {
+		proxy, err := NewProxy(upstreamConfig.URL, upstreamConfig, proxyType)
+		if err != nil {
+			return nil, err
+		}
+		return proxy, nil
+	} else {
+		logrus.Infof("%s URL configuration not provided. %s will not be set up.", description, description)
+	}
+
+	return nil, nil
+}
+
 func (g *Gateway) registerRoutes(config *Config) {
 	g.registerProxyRoutes(config.Distributor.Paths, defaultDistributorAPIs, http.HandlerFunc(g.distributorProxy.Handler))
 	g.registerProxyRoutes(config.QueryFrontend.Paths, defaultQueryFrontendAPIs, http.HandlerFunc(g.queryFrontendProxy.Handler))
 	g.registerProxyRoutes(config.Alertmanager.Paths, defaultAlertmanagerAPIs, http.HandlerFunc(g.alertmanagerProxy.Handler))
-	g.registerProxyRoutes(config.Ruler.Paths, defaultRulerAPIs, http.HandlerFunc(g.ruler.Handler))
+	g.registerProxyRoutes(config.Ruler.Paths, defaultRulerAPIs, http.HandlerFunc(g.rulerProxy.Handler))
 	g.srv.RegisterTo("/", http.HandlerFunc(g.notFoundHandler), server.UNAUTH)
 }
 
