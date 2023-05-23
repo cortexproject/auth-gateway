@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -11,12 +12,17 @@ import (
 )
 
 type mockDNSResolver struct {
-	IPs []net.IP
-	Err error
+	IPs  []net.IP
+	Err  error
+	Rand *rand.Rand
 }
 
 func (m mockDNSResolver) LookupIP(hostname string) ([]net.IP, error) {
-	return m.IPs, m.Err
+	shuffledIPs := make([]net.IP, len(m.IPs))
+	copy(shuffledIPs, m.IPs)
+	rand.Shuffle(len(shuffledIPs), func(i, j int) { shuffledIPs[i], shuffledIPs[j] = shuffledIPs[j], shuffledIPs[i] })
+
+	return shuffledIPs, m.Err
 }
 
 type customRoundTripper struct{}
@@ -31,6 +37,7 @@ func (rt customRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 }
 
 func TestDistribution(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	hostname := "example.com"
 	testCases := []struct {
 		name            string
@@ -109,8 +116,9 @@ func TestDistribution(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockResolver := mockDNSResolver{
-				IPs: tc.IPs,
-				Err: nil,
+				IPs:  tc.IPs,
+				Err:  nil,
+				Rand: r,
 			}
 
 			lb, err := newRoundRobinLoadBalancer(hostname, mockResolver.LookupIP)
