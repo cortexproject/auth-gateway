@@ -25,6 +25,8 @@ func TestNew(t *testing.T) {
 			config: Config{
 				HTTPListenAddr:                "http://localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "localhost",
+				UnAuthorizedHTTPListenPort:    1111,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -35,8 +37,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "invalid address for unauth",
 			config: Config{
-				UnAuthorizedHTTPListenAddr:    "http://localhost",
+				HTTPListenAddr:                "localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "http://localhost",
+				UnAuthorizedHTTPListenPort:    8081,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -49,6 +53,8 @@ func TestNew(t *testing.T) {
 			config: Config{
 				HTTPListenAddr:                "localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "localhost",
+				UnAuthorizedHTTPListenPort:    8081,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -61,6 +67,8 @@ func TestNew(t *testing.T) {
 			config: Config{
 				HTTPListenAddr:                "localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "localhost",
+				UnAuthorizedHTTPListenPort:    8081,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -275,6 +283,43 @@ func TestReadyHandler(t *testing.T) {
 
 			if rr.Body.String() != test.expectedBody {
 				t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), test.expectedBody)
+			}
+		})
+	}
+}
+
+func TestCheckPortAvailable(t *testing.T) {
+	tests := []struct {
+		name          string
+		listenAddr    string
+		listenPort    int
+		wantAvailable bool
+	}{
+		{
+			name:          "port available",
+			listenAddr:    "localhost",
+			listenPort:    8080,
+			wantAvailable: true,
+		},
+		{
+			name:          "port unavailable",
+			listenAddr:    "localhost",
+			listenPort:    1234,
+			wantAvailable: false,
+		},
+	}
+
+	listener, err := net.Listen(DefaultNetwork, fmt.Sprintf("%s:%d", "localhost", 1234))
+	if err != nil {
+		t.Fatalf("Failed to create a listener: %v", err)
+	}
+	defer listener.Close()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			available := checkPortAvailable(tt.listenAddr, tt.listenPort, DefaultNetwork)
+			if available != tt.wantAvailable {
+				t.Errorf("Expected port %d to be available: %v", tt.listenPort, tt.wantAvailable)
 			}
 		})
 	}
