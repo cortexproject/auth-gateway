@@ -132,4 +132,4 @@ If you have any questions about `auth-gateway`:
 - <a href="https://github.com/cortexproject/auth-gateway/issues/new">File an issue.</a>
 - Send an email to <a href="mailto:cortex-users@lists.cncf.io">cortex-users@lists.cncf.io</a>
 
-Your feedback is always welcome.
+Your feedback is always welcomed!
