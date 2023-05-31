@@ -316,7 +316,7 @@ func TestStartGateway(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gw, err := createMockGateway("localhost", 8080, 8081, tc.config)
+			gw, err := createMockGateway("localhost", 8010, 8011, tc.config)
 			if tc.expectedErr == nil && err != nil {
 				t.Fatalf("Unexpected error when creating the gateway: %v\n", err)
 			}
