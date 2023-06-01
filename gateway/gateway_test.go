@@ -14,7 +14,12 @@ import (
 )
 
 func TestNewGateway(t *testing.T) {
-	srv, err := server.New(server.Config{})
+	srv, err := server.New(server.Config{
+		HTTPListenAddr:             "localhost",
+		HTTPListenPort:             1234,
+		UnAuthorizedHTTPListenAddr: "localhost",
+		UnAuthorizedHTTPListenPort: 1235,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,6 +49,7 @@ func TestNewGateway(t *testing.T) {
 	}
 
 	assert.NotNil(t, gw)
+	srv.Shutdown()
 }
 
 func TestStartGateway(t *testing.T) {

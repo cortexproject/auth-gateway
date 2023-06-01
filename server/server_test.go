@@ -102,6 +102,7 @@ func TestNew(t *testing.T) {
 					t.Errorf("Expected server address to be %s:%d, but got %s", tc.config.HTTPListenAddr, tc.config.HTTPListenPort, server.authServer.httpServer.Addr)
 				}
 			}
+			server.Shutdown()
 		})
 	}
 }
@@ -123,7 +124,6 @@ func TestServer_RegisterTo(t *testing.T) {
 	s.RegisterTo("/test_auth", testHandler, AUTH)
 	s.RegisterTo("/test_unauth", testHandler, UNAUTH)
 
-	// Test authorized server.
 	req := httptest.NewRequest(http.MethodGet, "/test_auth", nil)
 	w := httptest.NewRecorder()
 
@@ -134,7 +134,6 @@ func TestServer_RegisterTo(t *testing.T) {
 		t.Errorf("Expected status code %d for AUTH server, but got %d", http.StatusOK, resp.StatusCode)
 	}
 
-	// Test unauthorized server.
 	req = httptest.NewRequest(http.MethodGet, "/test_unauth", nil)
 	w = httptest.NewRecorder()
 
@@ -235,6 +234,10 @@ func TestRun(t *testing.T) {
 
 func TestReadyHandler(t *testing.T) {
 	cfg := Config{
+		HTTPListenAddr:                "localhost",
+		HTTPListenPort:                1234,
+		UnAuthorizedHTTPListenAddr:    "localhost",
+		UnAuthorizedHTTPListenPort:    1235,
 		HTTPServerReadTimeout:         5 * time.Second,
 		HTTPServerWriteTimeout:        5 * time.Second,
 		HTTPServerIdleTimeout:         5 * time.Second,
@@ -286,6 +289,7 @@ func TestReadyHandler(t *testing.T) {
 			}
 		})
 	}
+	s.Shutdown()
 }
 
 func TestCheckPortAvailable(t *testing.T) {
