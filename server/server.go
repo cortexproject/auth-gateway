@@ -18,9 +18,11 @@ import (
 )
 
 const (
-	AUTH           = "auth"
-	UNAUTH         = "unauth"
-	DefaultNetwork = "tcp"
+	AUTH              = "auth"
+	UNAUTH            = "unauth"
+	DefaultNetwork    = "tcp"
+	DefaultAuthPort   = 80
+	DefaultUnauthPort = 8081
 )
 
 type Config struct {
@@ -58,7 +60,12 @@ type server struct {
 }
 
 func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, error) {
-	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTPListenAddr, cfg.HTTPListenPort)
+	port, err := checkPort(cfg.HTTPListenAddr, cfg.HTTPListenPort, DefaultAuthPort, DefaultNetwork)
+	if err != nil {
+		return nil, err
+	}
+	cfg.HTTPListenPort = port
+	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTPListenAddr, port)
 	httpListener, err := net.Listen(DefaultNetwork, listenAddr)
 	if err != nil {
 		return nil, err
@@ -115,6 +122,11 @@ func initAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, e
 }
 
 func initUnAuthServer(cfg *Config, middlewares []middleware.Interface) (*server, error) {
+	port, err := checkPort(cfg.UnAuthorizedHTTPListenAddr, cfg.UnAuthorizedHTTPListenPort, DefaultUnauthPort, DefaultNetwork)
+	if err != nil {
+		return nil, err
+	}
+	cfg.UnAuthorizedHTTPListenPort = port
 	listenAddr := fmt.Sprintf("%s:%d", cfg.UnAuthorizedHTTPListenAddr, cfg.UnAuthorizedHTTPListenPort)
 	unauthHttpListener, err := net.Listen(DefaultNetwork, listenAddr)
 	if err != nil {
@@ -222,7 +234,7 @@ func New(cfg Config) (*Server, error) {
 }
 
 func (s *Server) Run() error {
-	logrus.Infof("the server has started listening on %v", s.authServer.httpServer.Addr)
+	logrus.Infof("the main server has started listening on %v", s.authServer.httpServer.Addr)
 	errChan := make(chan error, 1)
 
 	go func() {
@@ -237,6 +249,7 @@ func (s *Server) Run() error {
 		}
 	}()
 
+	logrus.Infof("the admin server has started listening on %v", s.unAuthServer.httpServer.Addr)
 	go func() {
 		err := s.unAuthServer.run()
 		if err == http.ErrServerClosed {
@@ -291,4 +304,26 @@ func (s *Server) readyHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) GetHTTPHandlers() (http.Handler, http.Handler) {
 	return s.authServer.http, s.unAuthServer.http
+}
+
+func checkPortAvailable(addr string, port int, network string) bool {
+	l, err := net.Listen(network, fmt.Sprintf("%s:%d", addr, port))
+	if err != nil {
+		return false
+	}
+	l.Close()
+	return true
+}
+
+func checkPort(addr string, port int, defaultPort int, network string) (int, error) {
+	p := port
+	if port == 0 {
+		logrus.Info(fmt.Sprintf("port not specified, trying default port %d", defaultPort))
+		if checkPortAvailable(addr, defaultPort, network) {
+			p = defaultPort
+		} else {
+			return 0, fmt.Errorf(fmt.Sprintf("port %d is not available, please specify a port", defaultPort))
+		}
+	}
+	return p, nil
 }

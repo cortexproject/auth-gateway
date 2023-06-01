@@ -25,6 +25,8 @@ func TestNew(t *testing.T) {
 			config: Config{
 				HTTPListenAddr:                "http://localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "localhost",
+				UnAuthorizedHTTPListenPort:    1111,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -35,8 +37,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "invalid address for unauth",
 			config: Config{
-				UnAuthorizedHTTPListenAddr:    "http://localhost",
+				HTTPListenAddr:                "localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "http://localhost",
+				UnAuthorizedHTTPListenPort:    8081,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -49,6 +53,8 @@ func TestNew(t *testing.T) {
 			config: Config{
 				HTTPListenAddr:                "localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "localhost",
+				UnAuthorizedHTTPListenPort:    8081,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -61,6 +67,8 @@ func TestNew(t *testing.T) {
 			config: Config{
 				HTTPListenAddr:                "localhost",
 				HTTPListenPort:                8080,
+				UnAuthorizedHTTPListenAddr:    "localhost",
+				UnAuthorizedHTTPListenPort:    8081,
 				ServerGracefulShutdownTimeout: time.Second * 5,
 				HTTPServerReadTimeout:         time.Second * 10,
 				HTTPServerWriteTimeout:        time.Second * 10,
@@ -94,6 +102,7 @@ func TestNew(t *testing.T) {
 					t.Errorf("Expected server address to be %s:%d, but got %s", tc.config.HTTPListenAddr, tc.config.HTTPListenPort, server.authServer.httpServer.Addr)
 				}
 			}
+			server.Shutdown()
 		})
 	}
 }
@@ -115,7 +124,6 @@ func TestServer_RegisterTo(t *testing.T) {
 	s.RegisterTo("/test_auth", testHandler, AUTH)
 	s.RegisterTo("/test_unauth", testHandler, UNAUTH)
 
-	// Test authorized server.
 	req := httptest.NewRequest(http.MethodGet, "/test_auth", nil)
 	w := httptest.NewRecorder()
 
@@ -126,7 +134,6 @@ func TestServer_RegisterTo(t *testing.T) {
 		t.Errorf("Expected status code %d for AUTH server, but got %d", http.StatusOK, resp.StatusCode)
 	}
 
-	// Test unauthorized server.
 	req = httptest.NewRequest(http.MethodGet, "/test_unauth", nil)
 	w = httptest.NewRecorder()
 
@@ -227,6 +234,10 @@ func TestRun(t *testing.T) {
 
 func TestReadyHandler(t *testing.T) {
 	cfg := Config{
+		HTTPListenAddr:                "localhost",
+		HTTPListenPort:                1234,
+		UnAuthorizedHTTPListenAddr:    "localhost",
+		UnAuthorizedHTTPListenPort:    1235,
 		HTTPServerReadTimeout:         5 * time.Second,
 		HTTPServerWriteTimeout:        5 * time.Second,
 		HTTPServerIdleTimeout:         5 * time.Second,
@@ -275,6 +286,44 @@ func TestReadyHandler(t *testing.T) {
 
 			if rr.Body.String() != test.expectedBody {
 				t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), test.expectedBody)
+			}
+		})
+	}
+	s.Shutdown()
+}
+
+func TestCheckPortAvailable(t *testing.T) {
+	tests := []struct {
+		name          string
+		listenAddr    string
+		listenPort    int
+		wantAvailable bool
+	}{
+		{
+			name:          "port available",
+			listenAddr:    "localhost",
+			listenPort:    8080,
+			wantAvailable: true,
+		},
+		{
+			name:          "port unavailable",
+			listenAddr:    "localhost",
+			listenPort:    1234,
+			wantAvailable: false,
+		},
+	}
+
+	listener, err := net.Listen(DefaultNetwork, fmt.Sprintf("%s:%d", "localhost", 1234))
+	if err != nil {
+		t.Fatalf("Failed to create a listener: %v", err)
+	}
+	defer listener.Close()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			available := checkPortAvailable(tt.listenAddr, tt.listenPort, DefaultNetwork)
+			if available != tt.wantAvailable {
+				t.Errorf("Expected port %d to be available: %v", tt.listenPort, tt.wantAvailable)
 			}
 		})
 	}

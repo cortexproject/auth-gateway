@@ -14,7 +14,12 @@ import (
 )
 
 func TestNewGateway(t *testing.T) {
-	srv, err := server.New(server.Config{})
+	srv, err := server.New(server.Config{
+		HTTPListenAddr:             "localhost",
+		HTTPListenPort:             1234,
+		UnAuthorizedHTTPListenAddr: "localhost",
+		UnAuthorizedHTTPListenPort: 1235,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,6 +49,7 @@ func TestNewGateway(t *testing.T) {
 	}
 
 	assert.NotNil(t, gw)
+	srv.Shutdown()
 }
 
 func TestStartGateway(t *testing.T) {
@@ -316,7 +322,7 @@ func TestStartGateway(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gw, err := createMockGateway("localhost", 8080, 8081, tc.config)
+			gw, err := createMockGateway("localhost", 8010, 8011, tc.config)
 			if tc.expectedErr == nil && err != nil {
 				t.Fatalf("Unexpected error when creating the gateway: %v\n", err)
 			}
