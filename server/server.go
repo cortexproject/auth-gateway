@@ -21,7 +21,7 @@ const (
 	AUTH              = "auth"
 	UNAUTH            = "unauth"
 	DefaultNetwork    = "tcp"
-	DefaultAuthPort   = 8082
+	DefaultAuthPort   = 80
 	DefaultUnauthPort = 8081
 )
 
