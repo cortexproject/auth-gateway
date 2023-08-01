@@ -1,0 +1,87 @@
+before:
+  hooks:
+    - go mod download
+    # you may remove this if you don't need go generate
+    - go generate ./...
+project_name: auth-gateway
+builds:
+  - id: auth-gateway-darwin
+    ldflags:
+      -s -w -X github.com/cortexproject/auth-gateway/version.Version={{.Version}}
+    binary: auth-gateway
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+  - id: auth-gateway-linux
+    ldflags:
+      -s -w -X github.com/cortexproject/auth-gateway/version.Version={{.Version}}
+    binary: auth-gateway
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+  - id: auth-gateway-windows
+    ldflags:
+      -s -w -X github.com/cortexproject/auth-gateway/version.Version={{.Version}}
+    binary: auth-gateway
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - none*
+    format: binary
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+dockers:
+  - goarch: amd64
+    image_templates:
+      - "quay.io/cortexproject/auth-gateway:{{ .Tag }}-amd64"
+    build_flag_templates:
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.name={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=repository=https://github.com/cortexproject/auth-gateway"
+    - "--label=homepage=https://cortexmetrics.io"
+    - "--platform=linux/amd64"
+    use: buildx
+  - goarch: arm64
+    image_templates:
+      - "quay.io/cortexproject/auth-gateway:{{ .Tag }}-arm64"
+    build_flag_templates:
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.name={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=repository=https://github.com/cortexproject/auth-gateway"
+    - "--label=homepage=https://cortexmetrics.io"
+    - "--platform=linux/arm64"
+    use: buildx
+docker_manifests:
+    - name_template: "quay.io/cortexproject/auth-gateway:{{.Tag}}"
+      image_templates:
+      - "quay.io/cortexproject/auth-gateway:{{.Tag}}-amd64"
+      - "quay.io/cortexproject/auth-gateway:{{.Tag}}-arm64"
