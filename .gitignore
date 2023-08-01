@@ -9,3 +9,4 @@ docker-images/
 .vscode
 compose
 compose-simple
+dist/

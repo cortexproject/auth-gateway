@@ -8,9 +8,12 @@ import (
 	"github.com/cortexproject/auth-gateway/middleware"
 	"github.com/cortexproject/auth-gateway/server"
 	"github.com/cortexproject/auth-gateway/utils"
+	"github.com/cortexproject/auth-gateway/version"
 )
 
 func main() {
+	fmt.Print(version.Template)
+	version.CheckLatest()
 	if len(os.Args) < 2 {
 		fmt.Println("No configuration file is provided")
 		os.Exit(1)
