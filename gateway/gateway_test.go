@@ -69,6 +69,7 @@ func TestStartGateway(t *testing.T) {
 	testCases := []struct {
 		name           string
 		authHeader     string
+		orgID          string
 		config         *Config
 		paths          []string
 		expectedStatus int
@@ -221,6 +222,31 @@ func TestStartGateway(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
+			name: "passthrough config",
+			config: &Config{
+				Tenants: []Tenant{
+					{
+						Authentication: "basic",
+						Username:       "username",
+						Password:       "password",
+						Passthrough:    true,
+					},
+				},
+				Distributor: Upstream{
+					URL: distributorServer.URL,
+					Paths: []string{
+						"/test/distributor",
+					},
+				},
+			},
+			paths: []string{
+				"/test/distributor",
+			},
+			authHeader:     "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password")),
+			orgID:          "orgID",
+			expectedStatus: http.StatusOK,
+		},
+		{
 			name: "not found route",
 			config: &Config{
 				Distributor: Upstream{
@@ -348,6 +374,11 @@ func TestStartGateway(t *testing.T) {
 			for _, path := range tc.paths {
 				req, _ := http.NewRequest("GET", mockServer.URL+path, nil)
 				req.Header.Set("Authorization", tc.authHeader)
+
+				if tc.orgID != "" {
+					req.Header.Set("X-Scope-OrgID", tc.orgID)
+				}
+
 				resp, err := client.Do(req)
 				if err != nil {
 					t.Fatal(err)

@@ -40,6 +40,7 @@ type Tenant struct {
 	Username       string `yaml:"username"`
 	Password       string `yaml:"password"`
 	ID             string `yaml:"id"`
+	Passthrough    bool   `yaml:"passthrough"`
 }
 
 func Init(filePath string) (Config, error) {
