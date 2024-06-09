@@ -59,7 +59,6 @@ func (tenant *Tenant) basicAuth(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	r.Header.Set("X-Scope-OrgID", tenant.ID)
-
 	return true
 }
 
