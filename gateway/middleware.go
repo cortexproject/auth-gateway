@@ -61,7 +61,7 @@ func (tenant *Tenant) basicAuth(w http.ResponseWriter, r *http.Request) bool {
 	if !tenant.Passthrough {
 		r.Header.Set("X-Scope-OrgID", tenant.ID)
 	}
-
+	r.Header.Set("X-Scope-OrgID", tenant.ID)
 	return true
 }
 
