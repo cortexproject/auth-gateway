@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"crypto/subtle"
 	"net/http"
 
 	"github.com/cortexproject/auth-gateway/middleware"
@@ -53,14 +54,20 @@ func (tenant *Tenant) basicAuth(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	if tenant.Username == username {
-		if tenant.Password == password {
-			r.Header.Set("X-Scope-OrgID", tenant.ID)
-			return true
-		} else {
-			return false
-		}
+	if !tenant.saveCompare(username, password) {
+		return false
 	}
 
+	r.Header.Set("X-Scope-OrgID", tenant.ID)
+	return true
+}
+
+// attempt to mitigate timing attacks
+func (tenant *Tenant) saveCompare(username, password string) bool {
+	userNameCheck := subtle.ConstantTimeCompare([]byte(tenant.Username), []byte(username))
+	passwordCheck := subtle.ConstantTimeCompare([]byte(tenant.Password), []byte(password))
+	if userNameCheck == 1 && passwordCheck == 1 {
+		return true
+	}
 	return false
 }
