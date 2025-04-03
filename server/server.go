@@ -318,11 +318,11 @@ func checkPortAvailable(addr string, port int, network string) bool {
 func checkPort(addr string, port int, defaultPort int, network string) (int, error) {
 	p := port
 	if port == 0 {
-		logrus.Info(fmt.Sprintf("port not specified, trying default port %d", defaultPort))
+		logrus.Infof("port not specified, trying default port %d", defaultPort)
 		if checkPortAvailable(addr, defaultPort, network) {
 			p = defaultPort
 		} else {
-			return 0, fmt.Errorf(fmt.Sprintf("port %d is not available, please specify a port", defaultPort))
+			return 0, fmt.Errorf("port %d is not available, please specify a port", defaultPort)
 		}
 	}
 	return p, nil

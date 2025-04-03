@@ -55,8 +55,8 @@ func (lb *roundRobinLoadBalancer) roundTrip(req *http.Request) (*http.Response, 
 
 	if len(lb.ips) == 0 {
 		errMsg := fmt.Sprintln("no IP addresses available")
-		logrus.Errorf(errMsg)
-		return nil, fmt.Errorf(errMsg)
+		logrus.Errorf("%s", errMsg)
+		return nil, fmt.Errorf("%s", errMsg)
 	}
 
 	ip := lb.getNextIP()
