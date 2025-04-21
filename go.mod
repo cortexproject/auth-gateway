@@ -1,6 +1,6 @@
 module github.com/cortexproject/auth-gateway
 
-go 1.22.4
+go 1.24.0
 
 require (
 	github.com/google/go-github/v53 v53.2.0
